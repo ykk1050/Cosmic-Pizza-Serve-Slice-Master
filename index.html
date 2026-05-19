@@ -432,6 +432,19 @@ body{
   box-shadow:0 0 16px #00ff8880;
   background:rgba(0,30,15,.7);
 }
+/* 활성(선택된) 입력 칸 — 노란색 강조 외곽선 */
+.slice-input.active-input,
+#denom-input.active-input{
+  border-color:#ffe000!important;
+  outline:3px solid #ffe000;
+  outline-offset:2px;
+  box-shadow:0 0 20px #ffe000aa,0 0 40px #ffe00050!important;
+  animation:active-input-pulse 1.4s ease-in-out infinite;
+}
+@keyframes active-input-pulse{
+  0%,100%{outline-color:#ffe000;box-shadow:0 0 18px #ffe000aa}
+  50%{outline-color:#ffeb44;box-shadow:0 0 26px #ffe000,0 0 50px #ffe00060}
+}
 .slice-input::-webkit-outer-spin-button,
 .slice-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .slice-input[type=number]{-moz-appearance:textfield}
@@ -1601,7 +1614,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00016</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00018</div>
 
 <!-- 이어하기 모달 -->
 <div id="resume-backdrop">
@@ -2082,8 +2095,7 @@ function renderCustomerCard(idx) {
       <div class="wait-time-label">⏱ ${c.waitTimeLeft.toFixed(0)}초</div>
     </div>
     <div class="cust-status-msg" style="color:${statusColor}">${statusMsg}</div>
-    ${canServe ? `<div class="serve-sel-display" style="font-size:13px;color:#ffe000;text-align:center;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px">${frac(sel, G.chosenDenom)} <span>조각 선택됨</span></div>
-    <button class="cust-serve-btn active-btn" onclick="serveCustomer(${idx})">🍕 서빙!</button>` : ''}
+    ${canServe ? `<button class="cust-serve-btn active-btn" onclick="serveCustomer(${idx})">🍕 서빙!</button>` : ''}
   `;
 }
 
@@ -2187,7 +2199,7 @@ function renderControls() {
         <input type="text" id="denom-input" placeholder="예: 30"
                value="${prevVal}" autocomplete="off"
                readonly inputmode="none"
-               class="${prevVal ? 'has-value' : ''}">
+               class="active-input ${prevVal ? 'has-value' : ''}">
         <button class="act-btn cut" onclick="submitDenom()">🔪 커팅!</button>
       </div>
       ${xrayHTML}
@@ -2521,6 +2533,7 @@ function selectDenom(d) {
   // Brief cutting animation delay, then serve phase
   setTimeout(() => {
     setPhase('SERVE');
+    setActivePizza(G.activePizzaInput ?? 0); // 첫 번째 입력칸 노란색 강조
     renderNumpad();
   }, 600);
 }
@@ -2542,6 +2555,10 @@ function clickSlice(pizzaIdx, sliceIdx) {
 
 function setActivePizza(idx) {
   G.activePizzaInput = idx;
+  // 활성 입력칸 노란색 강조 갱신
+  document.querySelectorAll('.slice-input').forEach((el, i) => {
+    el.classList.toggle('active-input', i === idx);
+  });
   renderNumpad();
 }
 
@@ -2611,13 +2628,6 @@ function updateSlicesLightweight(pizzaIdx, skipInput) {
       else if (sel > needed) input.classList.add('input-over');
     }
     if (!skipInput && document.activeElement !== input) input.value = sel > 0 ? sel : '';
-  }
-
-  // Update serve count text in customer card (without rerendering button)
-  const card = document.getElementById(`cust-${pizzaIdx}`);
-  if (card) {
-    const selDisp = card.querySelector('.serve-sel-display');
-    if (selDisp) selDisp.innerHTML = `${frac(sel, denom)} <span>조각 선택됨</span>`;
   }
 
   // Update numpad active label
