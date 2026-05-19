@@ -181,6 +181,40 @@ body{
 #maint-bar{height:100%;background:linear-gradient(90deg,#ff4444,#ff8800);border-radius:3px;transition:width .3s linear}
 #maint-cost-label{font-size:9px;color:#ff666688}
 
+/* ── LEVEL BADGE (HUD 내부 난이도 표시) ── */
+#level-badge.hud-item{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  min-width:130px;padding:2px 8px;border-radius:8px;
+  background:linear-gradient(135deg,rgba(255,68,255,.06),rgba(0,136,255,.06));
+  border:1px solid #ff44ff35;
+  box-shadow:0 0 10px #ff44ff15;
+  transition:border-color .4s,box-shadow .4s,background .4s;
+}
+#level-badge-main{
+  display:flex;align-items:center;gap:4px;line-height:1;
+}
+#level-badge-emoji{font-size:14px;filter:drop-shadow(0 0 4px #ff44ff80)}
+#level-badge-num{
+  font-size:10px;font-weight:900;letter-spacing:1px;color:#ffe000;
+  text-shadow:0 0 6px #ffe000;padding:1px 5px;border-radius:4px;
+  background:rgba(255,224,0,.1);border:1px solid #ffe00040;
+}
+#level-badge-name{
+  font-size:13px;font-weight:800;letter-spacing:1px;
+  background:linear-gradient(135deg,#ff44ff,#00ffff,#ffe000);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  white-space:nowrap;
+}
+#level-badge-stars{display:flex;gap:1px;font-size:9px;line-height:1}
+.lvl-star{opacity:.18;filter:grayscale(1);transition:all .35s}
+.lvl-star.on{opacity:1;filter:none;text-shadow:0 0 5px #ffe000,0 0 10px #ff8800}
+/* 레벨별 강조색 */
+#level-badge.grade-1{border-color:#00ff8860;box-shadow:0 0 10px #00ff8825}
+#level-badge.grade-2{border-color:#00ffff60;box-shadow:0 0 10px #00ffff25}
+#level-badge.grade-3{border-color:#ffe00060;box-shadow:0 0 10px #ffe00025}
+#level-badge.grade-4{border-color:#ff880060;box-shadow:0 0 10px #ff880025}
+#level-badge.grade-5{border-color:#ff44ff80;box-shadow:0 0 14px #ff44ff45}
+
 /* ── PHASE INDICATOR ── */
 #phase-bar{
   display:flex;gap:5px;justify-content:center;align-items:center;
@@ -1013,6 +1047,11 @@ body{
   .hud-val{font-size:15px}
   .hud-label{font-size:8px;letter-spacing:1px}
   #maint-bar-bg{width:90px}
+  #level-badge.hud-item{min-width:110px;padding:2px 6px}
+  #level-badge-name{font-size:11px}
+  #level-badge-emoji{font-size:12px}
+  #level-badge-num{font-size:9px;padding:1px 4px}
+  #level-badge-stars{font-size:8px}
   #phase-bar{gap:4px}
   .ph-step{padding:2px 8px;font-size:9px}
   #main-area{gap:6px}
@@ -1421,9 +1460,21 @@ body{
         <div id="rep-bar-bg"><div id="rep-bar" style="width:100%"></div></div>
       </div>
     </div>
-    <div class="hud-item">
-      <span class="hud-label">🎮 레벨</span>
-      <span class="hud-val hv-level" id="hud-level">Lv.1</span>
+    <!-- 난이도 배지 (HUD 내부) -->
+    <div id="level-badge" class="hud-item">
+      <span class="hud-label">🎮 난이도</span>
+      <div id="level-badge-main">
+        <span id="level-badge-emoji">🌱</span>
+        <span id="level-badge-num">Lv.1</span>
+        <span id="level-badge-name">우주 견습생</span>
+      </div>
+      <div id="level-badge-stars">
+        <span class="lvl-star" data-step="0">⭐</span>
+        <span class="lvl-star" data-step="1">⭐</span>
+        <span class="lvl-star" data-step="2">⭐</span>
+        <span class="lvl-star" data-step="3">⭐</span>
+        <span class="lvl-star" data-step="4">⭐</span>
+      </div>
     </div>
     <div class="hud-item">
       <span class="hud-label">🏆 점수</span>
@@ -1500,7 +1551,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00014</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00015</div>
 
 <!-- PIZZA BOX TOWER -->
 <div id="box-tower"></div>
@@ -1716,28 +1767,59 @@ function frac(n, d) {
 ═══════════════════════════════════════════════ */
 const LEVELS = [
   {
+    // 🌱 Lv.1 — 분수의 기초 (분모 2~6)
+    emoji:'🌱',
     name:'우주 견습생',
-    orders:[{n:1,d:2},{n:1,d:3},{n:1,d:4},{n:3,d:4},{n:2,d:3},{n:2,d:4},{n:1,d:6},{n:5,d:6}],
-    denoms:[4,6,8,12,24],
-    waitTime:40, maintCost:30, maintInterval:25,
-    levelScore:400,
-    bonus: 80,
+    desc:'분수의 기초! 작은 분모부터 시작',
+    orders:[{n:1,d:2},{n:1,d:3},{n:1,d:4},{n:3,d:4},{n:2,d:3},{n:1,d:6},{n:5,d:6}],
+    denoms:[6,8,12,24],
+    waitTime:120, maintCost:25, maintInterval:30,
+    levelScore:300,
+    bonus:60,
   },
   {
+    // 🚀 Lv.2 — 분모 키우기 (분모 3~8)
+    emoji:'🚀',
+    name:'행성 요리사',
+    desc:'분모가 조금 커졌어요. 약수 관계를 잘 보세요!',
+    orders:[{n:1,d:3},{n:2,d:3},{n:1,d:4},{n:3,d:4},{n:1,d:6},{n:5,d:6},{n:3,d:8},{n:5,d:8},{n:7,d:8}],
+    denoms:[8,12,16,24,48],
+    waitTime:110, maintCost:40, maintInterval:28,
+    levelScore:700,
+    bonus:100,
+  },
+  {
+    // ⭐ Lv.3 — 서로소 분모 등장 (분모 4~12)
+    emoji:'⭐',
     name:'별빛 요리사',
-    orders:[{n:3,d:4},{n:2,d:3},{n:5,d:6},{n:3,d:8},{n:5,d:8},{n:7,d:12},{n:5,d:12},{n:11,d:12}],
-    denoms:[6,8,12,15,24,30],
-    waitTime:32, maintCost:55, maintInterval:22,
-    levelScore:800,
-    bonus:120,
+    desc:'서로소 분모가 등장! 최소공배수를 잘 찾아봐요',
+    orders:[{n:3,d:4},{n:5,d:6},{n:5,d:8},{n:7,d:8},{n:3,d:10},{n:7,d:10},{n:5,d:12},{n:7,d:12},{n:11,d:12}],
+    denoms:[12,24,40,60,120],
+    waitTime:100, maintCost:60, maintInterval:25,
+    levelScore:1300,
+    bonus:140,
   },
   {
-    name:'은하 마스터',
-    orders:[{n:7,d:8},{n:5,d:6},{n:11,d:12},{n:7,d:10},{n:9,d:10},{n:13,d:15},{n:7,d:15},{n:11,d:20}],
-    denoms:[10,12,15,20,24,30],
-    waitTime:26, maintCost:80, maintInterval:20,
-    levelScore:Infinity,
+    // 🌠 Lv.4 — 큰 분모 (분모 6~15)
+    emoji:'🌠',
+    name:'우주 셰프',
+    desc:'분모가 더 커졌어요. 침착하게 LCM을 계산해요',
+    orders:[{n:5,d:6},{n:5,d:8},{n:7,d:8},{n:7,d:10},{n:9,d:10},{n:7,d:12},{n:11,d:12},{n:7,d:15},{n:11,d:15},{n:13,d:15}],
+    denoms:[24,30,40,60,120],
+    waitTime:90, maintCost:80, maintInterval:22,
+    levelScore:2200,
     bonus:180,
+  },
+  {
+    // 🌌 Lv.5 — 최고 난이도 (분모 8~20)
+    emoji:'🌌',
+    name:'은하 마스터',
+    desc:'최고 난이도! 진정한 통분의 달인이 되어보세요',
+    orders:[{n:7,d:8},{n:9,d:10},{n:11,d:12},{n:11,d:15},{n:13,d:15},{n:14,d:15},{n:11,d:20},{n:13,d:20},{n:17,d:20}],
+    denoms:[24,40,60,120,240],
+    waitTime:80, maintCost:100, maintInterval:20,
+    levelScore:Infinity,
+    bonus:240,
   },
 ];
 
@@ -2116,7 +2198,6 @@ function submitDenom() {
 function renderHUD() {
   document.getElementById('hud-money').textContent = `₩${G.money.toLocaleString()}`;
   document.getElementById('hud-rep').textContent = `${Math.max(0,Math.round(G.reputation))}%`;
-  document.getElementById('hud-level').textContent = `Lv.${G.level + 1}`;
   document.getElementById('hud-score').textContent = G.score.toLocaleString();
   document.getElementById('hud-round').textContent = G.roundCount;
 
@@ -2132,6 +2213,22 @@ function renderHUD() {
     `-₩${lvlData.maintCost} / ${lvlData.maintInterval}초`;
   document.getElementById('maint-bar').style.width =
     `${(G.maintTimeLeft / lvlData.maintInterval * 100).toFixed(1)}%`;
+
+  // 난이도 배지 갱신
+  const badge = document.getElementById('level-badge');
+  if (badge) {
+    document.getElementById('level-badge-emoji').textContent = lvlData.emoji || '🎮';
+    document.getElementById('level-badge-num').textContent   = `Lv.${G.level + 1}`;
+    document.getElementById('level-badge-name').textContent  = lvlData.name;
+    // 별 점등 (난이도 별 1~5개)
+    document.querySelectorAll('#level-badge-stars .lvl-star').forEach((s, i) => {
+      s.classList.toggle('on', i <= G.level);
+    });
+    // 등급 색상 (hud-item 클래스도 유지)
+    badge.className = `hud-item grade-${G.level + 1}`;
+    // 툴팁용 설명
+    badge.title = lvlData.desc || '';
+  }
 }
 
 /* ═══════════════════════════════════════════════
