@@ -1900,6 +1900,8 @@ function renderPizzaStage() {
               min="0" max="${denom}" value="${sel > 0 ? sel : ''}"
               ${inputDisabled ? 'disabled' : ''}
               inputmode="none"
+              ontouchstart="event.preventDefault();"
+              ontouchend="event.preventDefault(); if(!this.disabled){ setActivePizza(${i}); this.focus({preventScroll:true}); }"
               onfocus="setActivePizza(${i})"
               oninput="onSliceInputChange(${i}, this.value)">
             <div class="frac-bar-input"></div>
@@ -1947,6 +1949,8 @@ function renderControls() {
         <label class="denom-input-label">통분 조각 수 (공통분모):</label>
         <input type="number" id="denom-input" min="2" max="200" placeholder="예: 30"
                value="${prevVal}" autocomplete="off" inputmode="none"
+               ontouchstart="event.preventDefault();"
+               ontouchend="event.preventDefault(); this.focus({preventScroll:true});"
                oninput="this.classList.toggle('has-value', this.value.length>0)"
                onkeydown="if(event.key==='Enter'){submitDenom();}"
                class="${prevVal ? 'has-value' : ''}">
@@ -1971,7 +1975,7 @@ function renderControls() {
     const isLCM  = chosen === optimalLCM;
     const chipsHTML = validList.map(d => {
       const cls = d === optimalLCM ? 'result-denom-chip lcm' : 'result-denom-chip';
-      const tag = d === optimalLCM ? ' ★LCM' : '';
+      const tag = d === optimalLCM ? ' ★최소공배수' : '';
       return `<span class="${cls}">${d}${tag}</span>`;
     }).join('');
     denomRow.innerHTML = `
@@ -2288,6 +2292,21 @@ function setActivePizza(idx) {
   G.activePizzaInput = idx;
   renderNumpad();
 }
+
+/* 터치 디바이스에서 input focus 시 키보드 억제 */
+document.addEventListener('focusin', function(e) {
+  const el = e.target;
+  if (!el) return;
+  const noKb = el.id === 'denom-input' ||
+               (el.classList && el.classList.contains('slice-input'));
+  if (!noKb) return;
+  // 터치 환경에서만 blur → 키보드 닫기
+  if (navigator.maxTouchPoints > 0) {
+    // 포커스는 유지하되 가상 키보드만 닫는 표준 방법이 없어 blur 후 재포커스
+    el.setAttribute('readonly', 'readonly');
+    setTimeout(() => el.removeAttribute('readonly'), 50);
+  }
+}, true);
 
 function onSliceInputChange(idx, val) {
   const denom = G.chosenDenom;
