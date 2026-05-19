@@ -1249,7 +1249,7 @@ body{
 <!-- START SCREEN -->
 <div id="start-screen" class="screen">
   <div class="screen-emoji">🍕</div>
-  <div class="screen-title">우주 피자 배달부</div>
+  <div class="screen-title">우주 피자 가게 경영영</div>
   <div style="font-size:20px;color:#ff44ff;font-weight:700;letter-spacing:4px">SLICE MASTER</div>
   <div class="screen-sub">
     우주 정거장의 배고픈 외계인들이 기다리고 있어요!<br>
@@ -1497,7 +1497,7 @@ body{
         <div class="guide-step-num">2</div>
         <div class="guide-step-txt"><b>통분 조각 수</b>(공통분모)를 선택하세요.<br>
           <em>12</em>를 고르면 → <b>¾ = 9/12, ⅔ = 8/12</b><br>
-          <b style="color:#00ff88">LCM(최소공배수)</b>를 고르면 보너스 포인트!🌟</div>
+          <b style="color:#00ff88">최소공배수</b>를 고르면 보너스 포인트!🌟</div>
       </div>
       <div class="guide-step">
         <div class="guide-step-num">3</div>
@@ -1556,7 +1556,7 @@ body{
       최소공배수를 공통분모로 고르면 가장 적은 조각으로 정확하게 나눌 수 있어요!
     </div>
 
-    <button class="guide-start-btn" onclick="closeGuide()">🚀 알겠어요! 바로 시작!</button>
+    <button class="guide-start-btn" onclick="closeGuide()">🚀 알겠어요!</button>
   </div>
 </div>
 
@@ -1899,6 +1899,7 @@ function renderPizzaStage() {
             <input type="number" class="slice-input" id="slice-input-${i}"
               min="0" max="${denom}" value="${sel > 0 ? sel : ''}"
               ${inputDisabled ? 'disabled' : ''}
+              inputmode="none"
               onfocus="setActivePizza(${i})"
               oninput="onSliceInputChange(${i}, this.value)">
             <div class="frac-bar-input"></div>
@@ -1944,8 +1945,8 @@ function renderControls() {
     denomRow.innerHTML = `
       <div class="denom-input-group">
         <label class="denom-input-label">통분 조각 수 (공통분모):</label>
-        <input type="number" id="denom-input" min="2" max="200" placeholder="예: 12"
-               value="${prevVal}" autocomplete="off"
+        <input type="number" id="denom-input" min="2" max="200" placeholder="예: 30"
+               value="${prevVal}" autocomplete="off" inputmode="none"
                oninput="this.classList.toggle('has-value', this.value.length>0)"
                onkeydown="if(event.key==='Enter'){submitDenom();}"
                class="${prevVal ? 'has-value' : ''}">
@@ -1984,7 +1985,7 @@ function renderControls() {
           <span class="result-denom-chips">${chipsHTML}</span>
         </div>
         <div class="result-denom-hint">
-          ★ 표시가 <b>최소공배수(LCM)</b>예요 — 가장 적은 조각 수로 두 손님 모두 만족시킬 수 있어요!
+          ★ 표시가 <b>최소공배수</b>예요 — 가장 적은 조각 수로 두 손님 모두 만족시킬 수 있어요!
         </div>
       </div>
     `;
