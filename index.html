@@ -1,0 +1,3394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚀 우주 피자 가게 사장 - 슬라이스 마스터</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden}
+body{
+  background:#03030f;color:#fff;
+  font-family:'Segoe UI',Arial,sans-serif;
+  user-select:none;
+}
+
+/* ── STARS ── */
+#stars-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ── SCREENS ── */
+.screen{
+  position:fixed;inset:0;z-index:500;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(2,2,20,.97);text-align:center;gap:18px;
+  padding:30px;
+}
+.screen-title{
+  font-size:clamp(28px,5vw,52px);font-weight:900;letter-spacing:3px;
+  background:linear-gradient(135deg,#ff44ff,#00ffff,#ffe000);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.screen-sub{font-size:15px;color:#aaa;line-height:1.7;max-width:480px}
+.screen-emoji{font-size:72px;line-height:1;filter:drop-shadow(0 0 20px #ff44ff)}
+.screen-btn{
+  padding:14px 50px;border-radius:14px;border:none;
+  font-size:17px;font-weight:700;cursor:pointer;letter-spacing:2px;
+  transition:transform .15s,box-shadow .15s;margin-top:6px;
+}
+.screen-btn:hover{transform:translateY(-3px)}
+.screen-btn.start{
+  background:linear-gradient(135deg,#ff44ff,#0088ff);color:#fff;
+  box-shadow:0 0 30px #ff44ff50;
+}
+.screen-btn.restart{
+  background:linear-gradient(135deg,#00ff88,#0088ff);color:#001a0d;
+  box-shadow:0 0 30px #00ff8850;
+}
+/* ── GAME OVER — 교육 배지 ── */
+#go-edu-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:10px 24px;border-radius:50px;
+  font-size:15px;font-weight:800;letter-spacing:1.5px;
+  margin:4px 0 10px;
+  border:2px solid transparent;
+}
+#go-edu-badge.grade-S{background:linear-gradient(135deg,#3d1a7e,#7e1a5e);border-color:#ff44ff;color:#ff44ff;text-shadow:0 0 10px #ff44ff}
+#go-edu-badge.grade-A{background:linear-gradient(135deg,#1a2d6e,#1a5e8e);border-color:#00ffff;color:#00ffff;text-shadow:0 0 10px #00ffff}
+#go-edu-badge.grade-B{background:linear-gradient(135deg,#1a4e2e,#1a6e4e);border-color:#00ff88;color:#00ff88;text-shadow:0 0 10px #00ff88}
+#go-edu-badge.grade-C{background:linear-gradient(135deg,#4e3a1a,#6e4e1a);border-color:#ffe000;color:#ffe000;text-shadow:0 0 10px #ffe000}
+#go-edu-badge.grade-D{background:rgba(255,255,255,.05);border-color:#888;color:#aaa}
+
+/* ── GAME OVER — 스탯 그리드 ── */
+#go-stats-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  width:100%;max-width:480px;margin:6px 0 14px;
+}
+.go-scard{
+  background:rgba(255,255,255,.05);border:1px solid #ffffff15;
+  border-radius:12px;padding:10px 12px;text-align:center;
+}
+.go-scard-lbl{display:block;font-size:11px;color:#aaa;letter-spacing:.5px;margin-bottom:4px}
+.go-scard-val{
+  display:block;font-size:20px;font-weight:800;
+}
+.go-scard.s-score .go-scard-val{color:#ff44ff;text-shadow:0 0 8px #ff44ff}
+.go-scard.s-round .go-scard-val{color:#00ffff;text-shadow:0 0 8px #00ffff}
+.go-scard.s-combo .go-scard-val{color:#ff8800;text-shadow:0 0 8px #ff8800}
+.go-scard.s-correct .go-scard-val{color:#00ff88;text-shadow:0 0 8px #00ff88}
+.go-scard.s-total .go-scard-val{color:#fff}
+.go-scard.s-acc .go-scard-val{color:#ffe000;text-shadow:0 0 8px #ffe000;font-size:22px}
+
+/* ── GAME OVER — 닉네임 입력 ── */
+#go-nick-row{
+  display:flex;gap:8px;width:100%;max-width:400px;margin:4px 0 6px;
+}
+#go-nickname{
+  flex:1;background:rgba(255,255,255,.07);
+  border:1.5px solid #ff44ff50;border-radius:10px;
+  color:#fff;font-size:15px;font-weight:600;
+  padding:10px 14px;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+#go-nickname::placeholder{color:#ffffff40}
+#go-nickname:focus{border-color:#ff44ff;box-shadow:0 0 14px #ff44ff40}
+#go-submit-btn{
+  padding:10px 18px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,#ff44ff,#0088ff);
+  color:#fff;font-size:14px;font-weight:800;
+  cursor:pointer;white-space:nowrap;
+  box-shadow:0 0 16px #ff44ff40;
+  transition:transform .15s,opacity .15s;
+}
+#go-submit-btn:hover:not(:disabled){transform:translateY(-2px)}
+#go-submit-btn:disabled{opacity:.45;cursor:not-allowed;background:#555}
+#go-submit-msg{
+  font-size:13px;font-weight:700;min-height:20px;
+  transition:color .3s;
+}
+#go-submit-msg.ok{color:#00ff88}
+#go-submit-msg.err{color:#ff4444}
+
+/* ── GAME OVER — 랭킹 영역 ── */
+#go-ranking-section{width:100%;max-width:560px;margin-top:4px}
+#go-ranking-btn{
+  width:100%;padding:9px;border-radius:10px;border:1.5px solid #00ffff40;
+  background:rgba(0,255,255,.07);color:#00ffff;
+  font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;
+  transition:background .2s,border-color .2s;
+}
+#go-ranking-btn:hover{background:rgba(0,255,255,.15);border-color:#00ffff80}
+#go-ranking-table{
+  margin-top:10px;max-height:240px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:#ff44ff40 transparent;
+}
+.rank-table{
+  width:100%;border-collapse:collapse;font-size:12px;
+}
+.rank-table th{
+  background:#ffffff10;color:#ffe000;font-weight:700;
+  padding:6px 8px;text-align:center;
+  position:sticky;top:0;z-index:1;
+  border-bottom:1px solid #ffffff15;letter-spacing:.5px;
+}
+.rank-table td{
+  padding:7px 8px;text-align:center;
+  border-bottom:1px solid #ffffff08;color:#ddd;
+}
+.rank-table tr:hover td{background:rgba(255,255,255,.04)}
+.rank-row-me td{background:rgba(255,68,255,.08)!important;color:#ff44ff!important;font-weight:700}
+.rank-grade-S{color:#ff44ff;font-weight:800}
+.rank-grade-A{color:#00ffff;font-weight:800}
+.rank-grade-B{color:#00ff88;font-weight:700}
+.rank-grade-C{color:#ffe000}
+.rank-grade-D{color:#aaa}
+.rank-medal{font-size:16px}
+#go-ranking-loading{color:#aaa;font-size:13px;text-align:center;padding:16px}
+
+/* ── GAME CONTAINER ── */
+#game{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;
+  height:100vh;max-width:1280px;margin:0 auto;
+  padding:8px 12px;gap:8px;
+}
+
+/* ── HUD ── */
+#hud{
+  display:flex;gap:10px;align-items:center;flex-shrink:0;
+  background:rgba(0,15,40,.85);
+  border:1px solid #00ffff25;border-radius:12px;
+  padding:8px 16px;backdrop-filter:blur(12px);
+}
+.hud-item{display:flex;flex-direction:column;align-items:center;min-width:85px}
+.hud-label{font-size:9px;color:#ffffff55;letter-spacing:2px;text-transform:uppercase}
+.hud-val{font-size:20px;font-weight:700}
+.hv-money{color:#ffe000;text-shadow:0 0 10px #ffe000}
+.hv-rep{color:#00ff88;text-shadow:0 0 10px #00ff88}
+.hv-level{color:#ff44ff;text-shadow:0 0 10px #ff44ff}
+.hv-score{color:#ff8800;text-shadow:0 0 10px #ff8800}
+#maint-wrap{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+#maint-label{font-size:9px;color:#ff444488;letter-spacing:1px}
+#maint-bar-bg{width:120px;height:6px;background:#1a1a3a;border-radius:3px;overflow:hidden}
+#maint-bar{height:100%;background:linear-gradient(90deg,#ff4444,#ff8800);border-radius:3px;transition:width .3s linear}
+#maint-cost-label{font-size:9px;color:#ff666688}
+
+/* ── PHASE INDICATOR ── */
+#phase-bar{
+  display:flex;gap:6px;justify-content:center;align-items:center;
+  flex-shrink:0;padding:0 4px;
+}
+.ph-step{
+  padding:3px 12px;border-radius:20px;font-size:10px;letter-spacing:1px;
+  background:rgba(255,255,255,.04);border:1px solid #ffffff10;color:#ffffff40;
+  transition:all .3s;
+}
+.ph-step.active{
+  background:rgba(0,255,255,.12);border-color:#00ffff80;
+  color:#00ffff;box-shadow:0 0 8px #00ffff40;
+}
+
+/* ── MAIN AREA ── */
+#main-area{
+  display:flex;gap:10px;flex:1;min-height:0;
+}
+
+/* ── CUSTOMERS PANEL ── */
+#customers-panel{
+  width:210px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:8px;overflow:visible;
+}
+#customers-panel-title{
+  font-size:9px;color:#ffffff40;letter-spacing:2px;text-align:center;
+}
+.cust-card{
+  background:rgba(0,15,45,.88);
+  border:1px solid #0055ff30;border-radius:12px;
+  padding:10px 12px;position:relative;
+  transition:border-color .3s,box-shadow .3s,background .3s;
+  flex:1;
+}
+.cust-card.waiting{border-color:#0055ff40}
+.cust-card.active-serve{
+  border-color:#00ffff;box-shadow:0 0 14px #00ffff40;
+  background:rgba(0,30,60,.9);
+}
+.cust-card.satisfied{
+  border-color:#00ff88;box-shadow:0 0 12px #00ff8840;
+  background:rgba(0,40,20,.9);
+}
+.cust-card.failed{
+  border-color:#ff4444;box-shadow:0 0 12px #ff444440;
+  background:rgba(40,0,0,.9);
+  animation:shake .4s ease;
+}
+.cust-card.timeout{border-color:#444;opacity:.55}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-6px)}
+  75%{transform:translateX(6px)}
+}
+.cust-avatar{font-size:34px;text-align:center;margin-bottom:4px;line-height:1}
+.cust-name{font-size:11px;color:#aaa;text-align:center;margin-bottom:6px}
+.cust-order-box{
+  background:rgba(255,255,255,.04);border-radius:8px;padding:7px;
+  text-align:center;margin-bottom:7px;
+}
+.cust-order-label{font-size:9px;color:#ffffff50;letter-spacing:1px;margin-bottom:4px}
+.fraction{
+  display:inline-flex;flex-direction:column;align-items:center;
+  font-size:22px;font-weight:700;color:#fff;line-height:1.1;
+}
+.fraction-line{width:120%;height:2px;background:#fff;margin:2px 0}
+
+/* ── INLINE VERTICAL FRACTION (generic) ── */
+.frac{
+  display:inline-flex;flex-direction:column;align-items:center;
+  vertical-align:middle;line-height:1;font-weight:700;
+}
+.frac-num,.frac-den{display:block;padding:0 4px;font-size:.95em}
+.frac-bar{
+  display:block;width:100%;min-width:18px;
+  height:2px;background:currentColor;margin:2px 0;border-radius:1px;
+}
+/* Fraction with editable input as numerator */
+.frac-with-input{
+  display:inline-flex;flex-direction:column;align-items:center;gap:3px;
+}
+.frac-bar-input{
+  width:78px;height:2.5px;background:#ffe000;border-radius:2px;
+  box-shadow:0 0 6px #ffe00080;
+}
+.frac-input-den{
+  font-size:22px;font-weight:700;color:#ffe000;
+  text-shadow:0 0 8px #ffe000;letter-spacing:1px;
+  line-height:1;padding:1px 0;
+}
+.fraction-denom-label{
+  font-size:9px;color:#ff44ff80;margin-top:3px;letter-spacing:1px;min-height:14px;
+  transition:all .3s;
+}
+.fraction-denom-label.show{color:#ffe000;text-shadow:0 0 6px #ffe000}
+.wait-bar-wrap{position:relative}
+.wait-bar-bg{height:5px;background:#111;border-radius:3px;overflow:hidden}
+.wait-bar{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,#00ff88,#ffe000);
+  transition:width .1s linear;
+}
+.wait-bar.warn{
+  background:linear-gradient(90deg,#ff8800,#ff4444);
+  animation:pulsebar .4s ease infinite alternate;
+}
+@keyframes pulsebar{
+  from{box-shadow:0 0 4px #ff4444}to{box-shadow:0 0 10px #ff4444}
+}
+.wait-time-label{font-size:9px;color:#ffffff40;text-align:right;margin-top:2px}
+.cust-status-msg{
+  font-size:11px;text-align:center;margin-top:5px;min-height:16px;font-weight:600;
+}
+.cust-serve-btn{
+  width:100%;margin-top:7px;padding:6px;border-radius:7px;border:none;
+  font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;
+  transition:all .15s;
+}
+.cust-serve-btn.active-btn{
+  background:linear-gradient(135deg,#00ff88,#00cc66);color:#001a0d;
+  box-shadow:0 0 12px #00ff8840;
+}
+.cust-serve-btn.active-btn:hover{transform:translateY(-2px)}
+.cust-serve-btn:disabled{background:#334;color:#666;cursor:not-allowed}
+
+/* ── KITCHEN ── */
+#kitchen-area{
+  flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;
+}
+
+/* ── PIZZA STAGE ── */
+#pizza-stage{
+  flex:1;display:flex;gap:16px;justify-content:center;align-items:center;
+  background:rgba(0,8,25,.7);
+  border:1px solid #ffffff08;border-radius:16px;
+  position:relative;overflow:hidden;min-height:0;
+}
+#pizza-stage::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 50%,#0a0a2a 0%,transparent 70%);
+  pointer-events:none;
+}
+.pizza-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  position:relative;z-index:1;
+}
+.pizza-wrap-title{
+  font-size:11px;letter-spacing:1px;
+  color:#00ffff;text-shadow:0 0 6px #00ffff;
+}
+.pizza-svg-outer{
+  position:relative;cursor:pointer;
+  filter:drop-shadow(0 0 12px rgba(255,190,0,.35));
+  transition:filter .3s;
+}
+.pizza-svg-outer:hover{
+  filter:drop-shadow(0 0 18px rgba(255,190,0,.5));
+}
+.pizza-slice-overlay{
+  fill:transparent;stroke:#00ffff;stroke-width:1.2;
+  cursor:pointer;transition:fill .12s;
+  pointer-events:all;
+}
+.pizza-slice-overlay:hover{fill:rgba(0,255,255,.3)}
+.pizza-slice-overlay.selected{fill:rgba(0,255,255,.58);stroke:#00ffff;stroke-width:1.8}
+.pizza-slice-overlay.needed-hint{fill:rgba(255,220,0,.12)}
+.pizza-slice-overlay.needed-hint:hover{fill:rgba(0,255,255,.38)}
+.pizza-slice-overlay.selected:hover{fill:rgba(0,255,255,.75)}
+.pizza-slice-count{
+  font-size:26px;font-weight:700;
+  color:#ffe000;text-shadow:0 0 10px #ffe000;
+  text-align:center;
+  transition:color .2s, text-shadow .2s;
+}
+.pizza-slice-count.count-correct{
+  color:#00ff88;text-shadow:0 0 14px #00ff88, 0 0 30px #00ff8860;
+}
+.pizza-slice-count.count-partial{
+  color:#ffe000;text-shadow:0 0 10px #ffe000;
+}
+@keyframes count-pop{
+  0%{transform:scale(1)}
+  40%{transform:scale(1.35)}
+  70%{transform:scale(.9)}
+  100%{transform:scale(1)}
+}
+.count-pop{animation:count-pop .28s cubic-bezier(.36,.07,.19,.97) both}
+.slice-input-wrap{
+  display:flex;gap:5px;align-items:center;justify-content:center;
+}
+.slice-input{
+  width:70px;height:36px;
+  background:rgba(0,20,50,.9);
+  border:2px solid #00ffff80;border-radius:8px;
+  color:#fff;font-size:20px;font-weight:700;
+  text-align:center;letter-spacing:1px;
+  outline:none;transition:all .15s;font-family:inherit;
+}
+.slice-input:focus{
+  border-color:#ffe000;color:#ffe000;
+  box-shadow:0 0 12px #ffe00060;
+  background:rgba(40,30,0,.6);
+}
+.slice-input.has-value{
+  border-color:#ffe000;color:#ffe000;
+  box-shadow:0 0 16px #ffe00080;
+  background:rgba(40,30,0,.6);
+}
+.slice-input.has-value.input-correct{
+  border-color:#00ff88;color:#00ff88;
+  box-shadow:0 0 16px #00ff8880;
+  background:rgba(0,30,15,.7);
+}
+.slice-input::-webkit-outer-spin-button,
+.slice-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.slice-input[type=number]{-moz-appearance:textfield}
+.slice-input-suffix{font-size:14px;color:#ffffff60}
+.pizza-slice-hint{font-size:11px;color:#ffffff50;text-align:center}
+#pizza-placeholder{
+  font-size:14px;color:#ffffff25;letter-spacing:2px;text-align:center;
+  position:relative;z-index:1;
+}
+
+/* ── CONTROLS ── */
+#controls-panel{
+  flex-shrink:0;
+  background:rgba(0,12,30,.9);
+  border:1px solid #ffffff10;border-radius:12px;
+  padding:12px 16px;
+}
+.ctrl-title{
+  font-size:9px;color:#ffffff40;letter-spacing:3px;text-transform:uppercase;
+  text-align:center;margin-bottom:10px;
+}
+#denom-row{
+  display:flex;gap:7px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.denom-input-group{
+  display:flex;gap:10px;align-items:center;justify-content:center;
+  flex-wrap:wrap;width:100%;
+}
+.denom-input-label{
+  font-size:13px;color:#00ffff;letter-spacing:1px;font-weight:600;
+}
+#denom-input{
+  width:130px;height:44px;
+  background:rgba(0,20,50,.9);
+  border:2px solid #00ffff;border-radius:10px;
+  color:#ffe000;font-size:24px;font-weight:700;
+  text-align:center;letter-spacing:2px;
+  box-shadow:0 0 12px #00ffff40,inset 0 0 8px #00ffff20;
+  outline:none;transition:all .2s;
+  font-family:inherit;
+}
+#denom-input:focus{
+  border-color:#ffe000;color:#ffe000;
+  box-shadow:0 0 18px #ffe00060,inset 0 0 10px #ffe00030;
+}
+#denom-input.has-value{
+  border-color:#ffe000;
+  box-shadow:0 0 22px #ffe000a0,inset 0 0 12px #ffe00040;
+  background:rgba(50,40,0,.7);
+}
+#denom-input::-webkit-outer-spin-button,
+#denom-input::-webkit-inner-spin-button{
+  -webkit-appearance:none;margin:0;
+}
+#denom-input[type=number]{-moz-appearance:textfield}
+.denom-hint{
+  width:100%;text-align:center;font-size:11px;color:#ffffff50;
+  letter-spacing:1px;margin-top:4px;
+}
+.chosen-display{
+  width:100%;text-align:center;font-size:15px;color:#00ffff;
+  letter-spacing:1px;padding:8px;
+}
+.chosen-display b{color:#ffe000;font-size:22px;text-shadow:0 0 10px #ffe000;margin:0 4px}
+
+/* ── RESULT 공통분모 해설 ── */
+.result-denom-wrap{
+  width:100%;padding:10px 4px;display:flex;flex-direction:column;gap:6px;
+}
+.result-denom-row{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.result-denom-label{
+  font-size:12px;color:#aaa;white-space:nowrap;letter-spacing:.5px;
+}
+.result-denom-chosen{
+  font-size:18px;font-weight:800;color:#00ffff;
+  text-shadow:0 0 8px #00ffff80;
+}
+.result-denom-chosen.is-lcm{
+  color:#00ff88;text-shadow:0 0 12px #00ff88;
+}
+.result-denom-chips{
+  display:flex;flex-wrap:wrap;gap:6px;
+}
+.result-denom-chip{
+  padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700;
+  background:rgba(255,255,255,.07);border:1.5px solid #ffffff20;color:#ccc;
+}
+.result-denom-chip.lcm{
+  background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,200,100,.1));
+  border-color:#00ff8860;color:#00ff88;
+  text-shadow:0 0 8px #00ff8870;
+  box-shadow:0 0 10px #00ff8820;
+}
+.result-denom-hint{
+  font-size:11.5px;color:#ffffff50;line-height:1.6;margin-top:2px;
+}
+.result-denom-hint b{color:#00ff8880;}
+.denom-btn{
+  width:58px;height:52px;border-radius:10px;
+  border:2px solid #2a2a4a;
+  background:rgba(15,15,50,.8);
+  color:#555;font-size:18px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+}
+.denom-btn:hover:not(.invalid-denom){transform:translateY(-2px)}
+.denom-btn .dlabel{font-size:8px;color:#ffffff30;letter-spacing:.5px;font-weight:400}
+.denom-btn.valid-denom{
+  border-color:#00ffff;color:#00ffff;
+  box-shadow:0 0 10px #00ffff35;
+}
+.denom-btn.valid-denom .dlabel{color:#00ffff60}
+.denom-btn.optimal-denom{
+  border-color:#ffe000;color:#ffe000;
+  box-shadow:0 0 14px #ffe00060;
+  animation:pulse-gold 1.4s ease infinite alternate;
+}
+.denom-btn.optimal-denom .dlabel{color:#ffe00070}
+@keyframes pulse-gold{
+  from{box-shadow:0 0 8px #ffe00040}
+  to{box-shadow:0 0 20px #ffe000a0}
+}
+.denom-btn.chosen-denom{
+  background:rgba(0,80,180,.5);border-color:#44aaff;color:#fff;
+  box-shadow:0 0 12px #44aaff50;
+}
+.denom-btn.chosen-denom .dlabel{color:#ffffffa0}
+.denom-btn.invalid-denom{opacity:.25;cursor:not-allowed}
+#action-row{display:flex;gap:10px;justify-content:center}
+.act-btn{
+  padding:10px 28px;border-radius:9px;border:none;
+  font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;
+  transition:all .15s;
+}
+.act-btn:hover:not(:disabled){transform:translateY(-2px)}
+.act-btn:disabled{background:#2a2a4a;color:#555;cursor:not-allowed;transform:none}
+.act-btn.cut{
+  background:linear-gradient(135deg,#ff44ff,#cc00cc);color:#fff;
+  box-shadow:0 0 12px #ff44ff40;
+}
+.act-btn.next-round{
+  background:linear-gradient(135deg,#ffe000,#ff8800);color:#111;
+  box-shadow:0 0 12px #ffe00040;
+}
+.act-btn.skip{
+  background:linear-gradient(135deg,#666,#444);color:#ccc;
+}
+
+/* ── NUMPAD ── */
+#numpad{
+  width:180px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:6px;
+  background:rgba(0,12,35,.85);
+  border:1px solid #00ffff20;border-radius:12px;
+  padding:10px;
+}
+#numpad-title{
+  font-size:10px;color:#00ffff;letter-spacing:2px;text-align:center;
+  text-shadow:0 0 6px #00ffff;
+}
+#numpad-active{
+  font-size:10px;color:#ffe000;text-align:center;letter-spacing:1px;
+  background:rgba(255,224,0,.08);border-radius:6px;padding:5px;
+  border:1px solid #ffe00030;min-height:24px;
+}
+#numpad-active b{color:#fff;font-size:13px}
+#numpad-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
+}
+.np-btn{
+  height:42px;border-radius:8px;border:1px solid #00ffff30;
+  background:rgba(0,30,60,.7);color:#00ffff;
+  font-size:18px;font-weight:700;cursor:pointer;
+  transition:all .12s;font-family:inherit;
+}
+.np-btn:hover{
+  background:rgba(0,60,120,.8);transform:translateY(-1px);
+  box-shadow:0 0 8px #00ffff60;
+}
+.np-btn:active{transform:translateY(1px)}
+.np-btn.np-action{
+  background:rgba(60,0,60,.7);border-color:#ff44ff60;color:#ff44ff;
+}
+.np-btn.np-action:hover{box-shadow:0 0 8px #ff44ff60}
+.np-btn.np-clear{
+  background:rgba(60,20,0,.7);border-color:#ff880060;color:#ff8800;
+}
+.np-btn.np-target{
+  font-size:11px;letter-spacing:1px;
+  background:rgba(0,40,20,.7);border-color:#00ff8860;color:#00ff88;
+}
+.np-btn.np-target.selected-target{
+  background:rgba(0,80,40,.9);box-shadow:0 0 10px #00ff8860;
+  color:#fff;
+}
+.np-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+#numpad-log{
+  margin-top:6px;display:flex;flex-direction:column;gap:3px;
+  max-height:140px;overflow:hidden;
+}
+#numpad-log-title{font-size:9px;color:#ffffff30;letter-spacing:1px;text-align:center}
+
+/* legacy log alias */
+#info-log{display:none}
+.log-entry{
+  font-size:10px;padding:4px 8px;border-radius:6px;
+  border-left:3px solid;background:rgba(255,255,255,.03);
+  animation:slideIn .3s ease;line-height:1.4;
+}
+@keyframes slideIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+.log-success{border-color:#00ff88;color:#00ff88}
+.log-warning{border-color:#ffe000;color:#ffe000}
+.log-error{border-color:#ff4444;color:#ff4444}
+.log-info{border-color:#00ffff;color:#00ffff}
+
+/* ── FLOATING MESSAGE ── */
+#float-msg{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:400;
+}
+.fmsg{
+  padding:16px 40px;border-radius:16px;
+  font-size:26px;font-weight:700;letter-spacing:2px;
+  border:2px solid currentColor;
+  animation:fmsg-anim .28s ease;
+  backdrop-filter:blur(6px);
+}
+.fmsg.success{color:#00ff88;box-shadow:0 0 30px #00ff8860;background:rgba(0,40,20,.7)}
+.fmsg.warning{color:#ffe000;box-shadow:0 0 30px #ffe00060;background:rgba(40,30,0,.7)}
+.fmsg.error{color:#ff4444;box-shadow:0 0 30px #ff444460;background:rgba(40,0,0,.7)}
+.fmsg.info{color:#00ffff;box-shadow:0 0 30px #00ffff60;background:rgba(0,20,40,.7)}
+@keyframes fmsg-anim{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ── CUTTING ANIMATION ── */
+@keyframes slice-draw{
+  from{stroke-dashoffset:600}to{stroke-dashoffset:0}
+}
+.cut-line{
+  stroke:#00ffff;stroke-width:1.5;stroke-linecap:round;opacity:.8;
+  stroke-dasharray:600;stroke-dashoffset:600;
+  animation:slice-draw .35s ease forwards;
+}
+
+/* ── REP BAR ── */
+#rep-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
+#rep-bar-bg{width:70px;height:5px;background:#1a1a3a;border-radius:3px;overflow:hidden}
+#rep-bar{height:100%;background:linear-gradient(90deg,#00ff88,#ffe000);border-radius:3px;transition:width .4s}
+
+/* ── PIZZA BOX TOWER ── */
+#box-tower{
+  position:fixed;right:220px;bottom:50px;
+  width:66px;display:flex;flex-direction:column-reverse;
+  gap:3px;z-index:200;pointer-events:none;align-items:center;
+}
+#tower-label{
+  position:fixed;right:220px;bottom:30px;width:66px;
+  text-align:center;font-size:9px;color:#ffe00080;
+  letter-spacing:1px;z-index:200;pointer-events:none;
+}
+.pbox{
+  width:60px;height:34px;
+  background:linear-gradient(160deg,#d4820f,#8b4513);
+  border-radius:5px 5px 3px 3px;
+  border:2px solid #5a2c08;border-bottom:3px solid #3d1e06;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;position:relative;overflow:hidden;
+  box-shadow:2px 3px 8px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.2);
+  animation:box-drop .38s cubic-bezier(.34,1.56,.64,1) both;
+}
+.pbox::after{
+  content:'';position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  background:linear-gradient(to bottom,rgba(255,255,255,.1) 0%,transparent 55%);
+  pointer-events:none;
+}
+@keyframes box-drop{
+  from{transform:translateY(-55px) scale(.7) rotate(-6deg);opacity:0}
+  to{transform:translateY(0) scale(1) rotate(0deg);opacity:1}
+}
+.pbox.fever-glow{
+  border-color:#ffe000;
+  animation:fever-box-pulse .7s ease infinite alternate;
+}
+@keyframes fever-box-pulse{
+  from{box-shadow:0 0 6px #ffe000,2px 3px 6px rgba(0,0,0,.4)}
+  to{box-shadow:0 0 22px #ffe000,0 0 44px #ff8800}
+}
+.pbox.falling{
+  animation:pbox-fall .5s ease forwards !important;
+}
+@keyframes pbox-fall{
+  0%{transform:translateX(0) rotate(0);opacity:1}
+  40%{transform:translateX(28px) rotate(22deg)}
+  100%{transform:translateX(110px) rotate(60deg) scale(.25);opacity:0}
+}
+
+/* ── FEVER OVERLAY ── */
+#fever-overlay{
+  position:fixed;inset:0;z-index:350;pointer-events:none;
+  display:none;
+}
+#fever-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 40%,rgba(255,200,0,.18) 0%,transparent 65%);
+  animation:fever-bg-breathe 1.2s ease infinite alternate;
+}
+@keyframes fever-bg-breathe{from{opacity:.4}to{opacity:1}}
+#fever-banner{
+  position:absolute;top:16%;left:50%;
+  transform:translateX(-50%);
+  font-size:clamp(30px,5vw,54px);font-weight:900;letter-spacing:6px;
+  color:#ffe000;
+  text-shadow:0 0 20px #ffe000,0 0 50px #ff8800,0 0 80px #ff4400;
+  white-space:nowrap;
+  animation:banner-appear .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes banner-appear{
+  from{transform:translateX(-50%) scale(.15);opacity:0}
+  to{transform:translateX(-50%) scale(1);opacity:1}
+}
+#fever-sub{
+  position:absolute;top:calc(16% + clamp(38px,6vw,68px));
+  left:50%;transform:translateX(-50%);
+  font-size:13px;color:rgba(255,255,255,.75);letter-spacing:3px;
+  white-space:nowrap;
+  animation:banner-appear .5s .12s cubic-bezier(.34,1.56,.64,1) both;
+}
+#fever-bar-wrap{
+  position:absolute;bottom:60px;left:50%;transform:translateX(-50%);
+  width:230px;text-align:center;
+}
+#fever-bar-lbl{font-size:10px;color:#ffe000aa;letter-spacing:2px;margin-bottom:4px}
+#fever-bar-bg{height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;
+  border:1px solid #ffe00030;}
+#fever-bar-inner{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,#ffe000,#ff8800);
+  transition:width .1s linear;
+}
+
+/* ── SHOP ── */
+#shop{
+  flex-shrink:0;
+  background:rgba(0,10,30,.9);
+  border:1px solid #ffe00030;border-radius:12px;
+  padding:8px 8px 6px;backdrop-filter:blur(8px);
+  margin-top:4px;
+}
+#shop-title{
+  font-size:9px;color:#ffe00080;letter-spacing:2px;
+  text-align:center;margin-bottom:6px;
+}
+#shop-row{display:flex;gap:5px;justify-content:space-between}
+.shop-item{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;align-items:center;
+  background:rgba(255,255,255,.04);
+  border:1.5px solid #ffffff15;
+  border-radius:9px;padding:6px 2px 4px;
+  cursor:pointer;transition:all .15s;position:relative;
+}
+.shop-item:hover:not(.unaffordable):not(.permanent-owned){
+  transform:translateY(-2px);
+  border-color:#ffe00080;
+  box-shadow:0 0 10px #ffe00050;
+  background:rgba(255,224,0,.06);
+}
+.shop-item.permanent-owned{
+  border-color:#00ff88;background:rgba(0,255,136,.06);
+  cursor:default;
+}
+.shop-item.use-mode{
+  border-color:#ff44ff;background:rgba(255,68,255,.08);
+}
+.shop-item.use-mode:hover{
+  box-shadow:0 0 14px #ff44ff60;
+  background:rgba(255,68,255,.15);
+}
+.shop-item.unaffordable{opacity:.4;cursor:not-allowed}
+.shop-icon{font-size:22px;line-height:1}
+.shop-name{
+  font-size:8px;color:#fff;letter-spacing:.3px;
+  margin-top:3px;text-align:center;line-height:1.2;
+}
+.shop-price{
+  font-size:9px;color:#ffe000;font-weight:700;margin-top:2px;letter-spacing:.5px;
+}
+.shop-item.use-mode .shop-price{color:#ff44ff}
+.shop-item.permanent-owned .shop-price{color:#00ff88}
+.shop-count{
+  position:absolute;top:-5px;right:-3px;
+  background:#00ff88;color:#001a0d;
+  border-radius:50%;min-width:18px;height:18px;padding:0 4px;
+  font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid #001a0d;
+  box-shadow:0 0 6px #00ff8880;
+}
+.shop-tip{
+  position:absolute;bottom:calc(100% + 8px);left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,5,20,.97);
+  border:1px solid #ffe00080;
+  border-radius:8px;padding:8px 10px;font-size:11px;color:#fff;
+  width:170px;line-height:1.45;letter-spacing:.3px;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+  z-index:260;text-align:left;
+}
+.shop-item:hover .shop-tip{opacity:1}
+
+/* ── X-RAY SUGGESTION CHIPS ── */
+.xray-suggestions{
+  display:flex;gap:6px;justify-content:center;flex-wrap:wrap;
+  margin-top:6px;width:100%;
+}
+.xray-label{
+  width:100%;text-align:center;font-size:10px;
+  color:#00ffff80;letter-spacing:2px;margin-bottom:2px;
+}
+.xray-chip{
+  padding:4px 12px;border-radius:14px;
+  background:rgba(0,255,255,.06);
+  border:1.5px solid #00ffff;color:#00ffff;
+  font-weight:700;font-size:13px;cursor:pointer;
+  letter-spacing:1px;
+  animation:xray-pulse 1.5s ease infinite alternate;
+}
+.xray-chip:hover{background:rgba(0,255,255,.22);transform:translateY(-1px)}
+.xray-chip.optimal{
+  border-color:#ffe000;color:#ffe000;
+  background:rgba(255,224,0,.08);
+}
+@keyframes xray-pulse{
+  from{box-shadow:0 0 4px currentColor}
+  to{box-shadow:0 0 14px currentColor,0 0 26px currentColor}
+}
+
+/* ── TOWER SHIELD ── */
+#tower-shield{
+  position:fixed;right:220px;bottom:8px;width:66px;
+  text-align:center;font-size:10px;color:#00ff88;
+  letter-spacing:1px;z-index:201;pointer-events:none;
+  text-shadow:0 0 6px #00ff88;
+}
+
+/* ── ITEM MODAL ── */
+#item-modal-backdrop{
+  position:fixed;inset:0;
+  background:rgba(0,5,15,.78);
+  backdrop-filter:blur(5px);
+  z-index:450;
+  display:none;
+  align-items:center;justify-content:center;
+}
+#item-modal-backdrop.active{
+  display:flex;
+  animation:modal-fade-in .2s ease;
+}
+#item-modal-backdrop.active #item-modal{
+  animation:modal-pop-in .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes modal-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes modal-pop-in{
+  from{transform:scale(.6) translateY(20px);opacity:0}
+  to{transform:scale(1) translateY(0);opacity:1}
+}
+#item-modal{
+  background:linear-gradient(160deg,rgba(10,20,45,.98),rgba(5,10,30,.98));
+  border:2px solid #ffe000;border-radius:18px;
+  padding:22px 24px;min-width:340px;max-width:420px;
+  box-shadow:0 0 50px #ffe00050,0 8px 30px rgba(0,0,0,.6);
+}
+#item-modal-header{
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:14px;padding-bottom:12px;
+  border-bottom:1px solid #ffe00030;
+}
+#item-modal-icon{
+  font-size:42px;line-height:1;
+  filter:drop-shadow(0 0 14px #ffe00060);
+}
+#item-modal-titles{flex:1}
+#item-modal-name{
+  font-size:20px;font-weight:800;color:#ffe000;
+  letter-spacing:1.5px;line-height:1.1;
+}
+#item-modal-stock{
+  font-size:11px;color:#00ff88;letter-spacing:1px;
+  margin-top:4px;text-shadow:0 0 6px #00ff8860;
+}
+#item-modal-desc{
+  font-size:13px;color:#fff;line-height:1.65;
+  background:rgba(255,255,255,.04);border-radius:10px;
+  padding:11px 14px;margin-bottom:14px;
+  border:1px solid #ffffff15;
+}
+#item-modal-use{
+  display:block;width:100%;
+  padding:11px;border-radius:9px;border:none;
+  background:linear-gradient(135deg,#ff44ff,#ff8800);
+  color:#fff;font-weight:700;font-size:14px;
+  letter-spacing:1.5px;cursor:pointer;
+  margin-bottom:14px;transition:transform .15s;
+  box-shadow:0 0 14px #ff44ff40;
+}
+#item-modal-use:hover{transform:translateY(-2px);box-shadow:0 0 22px #ff44ff70}
+.modal-qty-section{
+  background:rgba(255,224,0,.05);border-radius:10px;
+  padding:12px 14px;margin-bottom:14px;
+  border:1px solid #ffe00030;
+}
+.modal-qty-title{
+  text-align:center;font-size:10px;color:#ffe00080;
+  letter-spacing:2px;margin-bottom:8px;
+}
+.modal-qty-row{
+  display:flex;align-items:center;justify-content:center;
+  gap:14px;margin:6px 0;
+}
+.modal-qty-btn{
+  width:38px;height:38px;border-radius:9px;
+  border:2px solid #ffe000;
+  background:rgba(255,224,0,.1);
+  color:#ffe000;font-size:22px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-qty-btn:hover:not(:disabled){
+  background:rgba(255,224,0,.25);
+  box-shadow:0 0 12px #ffe00060;
+}
+.modal-qty-btn:disabled{opacity:.3;cursor:not-allowed}
+.modal-qty-value{
+  font-size:28px;font-weight:900;color:#fff;
+  width:56px;text-align:center;letter-spacing:1px;
+  text-shadow:0 0 10px #ffe00040;
+}
+.modal-qty-info{
+  display:flex;justify-content:space-between;
+  font-size:12px;color:#ffffff80;
+  padding-top:8px;border-top:1px solid #ffffff10;
+  margin-top:8px;
+}
+.modal-qty-total{color:#ffe000;font-weight:700;font-size:15px}
+.modal-qty-total b{font-size:18px;text-shadow:0 0 8px #ffe000}
+.modal-actions{display:flex;gap:10px}
+.modal-actions button{
+  flex:1;padding:12px;border-radius:9px;border:none;
+  font-weight:700;font-size:13px;letter-spacing:1.5px;
+  cursor:pointer;transition:transform .15s;
+}
+.modal-actions button:hover:not(:disabled){transform:translateY(-2px)}
+.modal-actions .btn-buy{
+  background:linear-gradient(135deg,#ffe000,#ff8800);
+  color:#111;box-shadow:0 0 14px #ffe00050;
+}
+.modal-actions .btn-cancel{
+  background:rgba(255,255,255,.06);color:#fff;
+  border:1px solid #ffffff25;
+}
+.modal-actions button:disabled{
+  opacity:.4;cursor:not-allowed;transform:none;
+  background:#333!important;color:#777!important;box-shadow:none;
+}
+
+/* ── COMBO POPUP ── */
+#combo-popup-wrap{
+  position:fixed;top:42%;left:50%;
+  transform:translate(-50%,-50%);
+  z-index:380;pointer-events:none;
+}
+#combo-popup{
+  display:inline-block;
+  font-size:clamp(34px,5.5vw,62px);
+  font-weight:900;letter-spacing:4px;
+  color:#ffe000;
+  text-shadow:
+    0 0 12px #ffe000,
+    0 0 24px #ff44ff,
+    0 0 48px #ff44ff,
+    4px 4px 0 #cc0066,
+    -2px -2px 0 #00ffff;
+  white-space:nowrap;opacity:0;
+  font-family:'Impact','Segoe UI',Arial,sans-serif;
+  text-transform:uppercase;
+}
+.combo-burst{
+  animation:combo-pop 2.2s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes combo-pop{
+  0%   { transform:scale(0)   translateY(0);     opacity:0 }
+  10%  { transform:scale(1.4) translateY(0);     opacity:1 }
+  16%  { transform:scale(1)   translateY(0);     opacity:1 }
+  100% { transform:scale(1)   translateY(-120px); opacity:0 }
+}
+
+/* ── FEVER SHIPS ── */
+.fship{
+  position:fixed;z-index:349;pointer-events:none;
+  left:-100px;top:0;
+}
+@keyframes ship-fly{
+  0%{transform:translateX(0);opacity:0}
+  6%{opacity:1}
+  94%{opacity:1}
+  100%{transform:translateX(calc(100vw + 200px));opacity:0}
+}
+
+/* ── GUIDE BUTTON ── */
+/* ── FLOATING BUTTONS WRAP ── */
+#float-btn-group{
+  position:fixed;bottom:24px;right:24px;z-index:600;
+  display:flex;flex-direction:column;gap:10px;align-items:flex-end;
+}
+#guide-btn,#ranking-btn{
+  color:#fff;font-size:14px;font-weight:700;letter-spacing:1.2px;
+  padding:11px 20px;border-radius:50px;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+  white-space:nowrap;
+}
+#guide-btn{
+  background:linear-gradient(135deg,#ff44ff,#0088ff);
+  box-shadow:0 0 20px #ff44ff60;
+  animation:guide-pulse 2.4s ease-in-out infinite;
+}
+#guide-btn:hover{
+  transform:translateY(-3px) scale(1.06);
+  box-shadow:0 0 40px #ff44ffaa;
+  animation:none;
+}
+#ranking-btn{
+  background:linear-gradient(135deg,#ffe000,#ff8800);
+  color:#111;
+  box-shadow:0 0 20px #ffe00050;
+  animation:ranking-pulse 2.8s ease-in-out infinite;
+}
+#ranking-btn:hover{
+  transform:translateY(-3px) scale(1.06);
+  box-shadow:0 0 40px #ffe000aa;
+  animation:none;
+}
+@keyframes guide-pulse{
+  0%,100%{box-shadow:0 0 18px #ff44ff60}
+  50%{box-shadow:0 0 36px #ff44ffcc,0 0 70px #0088ff40}
+}
+@keyframes ranking-pulse{
+  0%,100%{box-shadow:0 0 16px #ffe00050}
+  50%{box-shadow:0 0 32px #ffe000cc,0 0 60px #ff880040}
+}
+
+/* ── RANKING MODAL ── */
+#rank-modal-backdrop{
+  position:fixed;inset:0;z-index:700;
+  background:rgba(0,0,20,.82);
+  backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;
+  padding:16px;
+}
+#rank-modal-backdrop.active{display:flex;animation:modal-fade-in .25s ease}
+#rank-modal{
+  background:linear-gradient(160deg,#0b0b26,#1a0a2e);
+  border:1.5px solid #ffe00040;
+  border-radius:22px;
+  max-width:600px;width:100%;
+  max-height:88vh;overflow-y:auto;
+  padding:28px 24px 24px;
+  position:relative;
+  box-shadow:0 0 60px #ffe00020,0 0 120px #ff880015,inset 0 0 40px #ffffff04;
+  scrollbar-width:thin;scrollbar-color:#ffe00040 transparent;
+}
+#rank-modal-backdrop.active #rank-modal{animation:modal-pop-in .38s cubic-bezier(.34,1.56,.64,1)}
+#rank-modal-close{
+  position:absolute;top:14px;right:16px;
+  background:none;border:1.5px solid #ffffff25;
+  color:#aaa;font-size:15px;
+  width:30px;height:30px;border-radius:50%;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:border-color .15s,color .15s,background .15s;
+}
+#rank-modal-close:hover{background:#ffffff18;border-color:#fff;color:#fff}
+.rank-modal-title{
+  font-size:20px;font-weight:900;letter-spacing:2px;
+  background:linear-gradient(135deg,#ffe000,#ff8800);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:4px;
+}
+.rank-modal-sub{font-size:12px;color:#888;margin-bottom:16px}
+.rank-mode-tabs{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;
+}
+.rank-tab{
+  padding:7px 12px;border-radius:8px;border:1.5px solid #ffffff15;
+  background:rgba(255,255,255,.04);color:#aaa;
+  font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;
+  transition:background .2s,border-color .2s,color .2s;
+}
+.rank-tab.active{
+  background:rgba(255,224,0,.14);border-color:#ffe00070;color:#ffe000;
+  box-shadow:0 0 8px #ffe00030;
+}
+.rank-tab:hover:not(.active){background:rgba(255,255,255,.08);color:#fff}
+/* 활성 탭별 강조 색상 */
+.rank-tab.active[data-sort="accuracy"]{background:rgba(0,255,136,.12);border-color:#00ff8860;color:#00ff88;box-shadow:0 0 8px #00ff8830}
+.rank-tab.active[data-sort="score"]{background:rgba(255,68,255,.12);border-color:#ff44ff60;color:#ff44ff;box-shadow:0 0 8px #ff44ff30}
+.rank-tab.active[data-sort="combo"]{background:rgba(255,136,0,.12);border-color:#ff880060;color:#ff8800;box-shadow:0 0 8px #ff880030}
+.rank-tab.active[data-sort="round"]{background:rgba(0,255,255,.12);border-color:#00ffff60;color:#00ffff;box-shadow:0 0 8px #00ffff30}
+.rank-tab.active[data-sort="grade"]{background:rgba(200,100,255,.12);border-color:#cc64ff60;color:#cc64ff;box-shadow:0 0 8px #cc64ff30}
+.rank-tab.active[data-sort="recent"]{background:rgba(255,255,255,.08);border-color:#ffffff40;color:#fff}
+
+/* 정렬 기준 강조 열 */
+.rank-col-highlight{color:#ffe000!important;font-weight:900!important}
+
+#rank-modal-table-wrap{
+  max-height:400px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:#ffe00040 transparent;
+}
+#rank-modal-loading{
+  text-align:center;padding:24px;color:#aaa;font-size:14px;
+}
+
+/* ── 개인정보 확인 모달 ── */
+#privacy-backdrop{
+  position:fixed;inset:0;z-index:900;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+#privacy-backdrop.active{display:flex;animation:modal-fade-in .2s ease}
+#privacy-modal{
+  background:linear-gradient(160deg,#1a0a0a,#2a1010);
+  border:2px solid #ff444480;border-radius:20px;
+  max-width:420px;width:100%;padding:28px 24px;
+  position:relative;text-align:center;
+  box-shadow:0 0 60px #ff444430;
+}
+#privacy-backdrop.active #privacy-modal{animation:modal-pop-in .35s cubic-bezier(.34,1.56,.64,1)}
+#privacy-icon{font-size:52px;margin-bottom:10px;line-height:1}
+#privacy-title{font-size:17px;font-weight:900;color:#ff6666;margin-bottom:8px}
+#privacy-body{font-size:13.5px;color:#ddd;line-height:1.75;margin-bottom:6px}
+#privacy-detected{
+  background:rgba(255,68,68,.1);border:1px solid #ff444440;
+  border-radius:10px;padding:10px 14px;margin:10px 0 16px;
+  font-size:13px;color:#ff9999;text-align:left;line-height:1.7;
+}
+#privacy-detected b{color:#ff6666}
+.privacy-actions{display:flex;gap:10px;margin-top:4px}
+.privacy-actions button{
+  flex:1;padding:11px;border-radius:10px;border:none;
+  font-size:14px;font-weight:800;cursor:pointer;
+  transition:transform .15s,opacity .15s;
+}
+.privacy-actions button:hover{transform:translateY(-2px)}
+#privacy-re-enter{
+  background:linear-gradient(135deg,#ff4444,#cc0000);color:#fff;
+  box-shadow:0 0 14px #ff444440;
+}
+#privacy-confirm{
+  background:rgba(255,255,255,.08);color:#aaa;
+  border:1.5px solid #ffffff20!important;
+}
+
+/* ── GUIDE MODAL ── */
+#guide-backdrop{
+  position:fixed;inset:0;z-index:700;
+  background:rgba(0,0,20,.82);
+  backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;
+  padding:16px;
+}
+#guide-backdrop.active{display:flex;animation:modal-fade-in .25s ease}
+#guide-modal{
+  background:linear-gradient(160deg,#0b0b26,#1a0a2e);
+  border:1.5px solid #ff44ff40;
+  border-radius:22px;
+  max-width:580px;width:100%;
+  max-height:88vh;overflow-y:auto;
+  padding:32px 28px 28px;
+  position:relative;
+  box-shadow:0 0 60px #ff44ff25,0 0 120px #0088ff15,inset 0 0 40px #ffffff04;
+  scrollbar-width:thin;scrollbar-color:#ff44ff40 transparent;
+}
+#guide-backdrop.active #guide-modal{animation:modal-pop-in .38s cubic-bezier(.34,1.56,.64,1)}
+#guide-close{
+  position:absolute;top:14px;right:16px;
+  background:none;border:1.5px solid #ffffff25;
+  color:#aaa;font-size:15px;
+  width:30px;height:30px;border-radius:50%;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:border-color .15s,color .15s,background .15s;
+}
+#guide-close:hover{background:#ffffff18;border-color:#fff;color:#fff}
+
+/* guide content typography */
+.guide-hero{
+  text-align:center;margin-bottom:22px;
+}
+.guide-hero-emoji{font-size:64px;line-height:1;filter:drop-shadow(0 0 20px #ff44ff)}
+.guide-hero-title{
+  font-size:22px;font-weight:900;letter-spacing:3px;margin-top:10px;
+  background:linear-gradient(135deg,#ff44ff,#00ffff,#ffe000);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.guide-hero-sub{font-size:13px;color:#aaa;margin-top:6px;line-height:1.6}
+.guide-section{margin-bottom:20px}
+.guide-section-title{
+  font-size:15px;font-weight:800;letter-spacing:1.5px;
+  color:#ffe000;margin-bottom:10px;
+  display:flex;align-items:center;gap:7px;
+}
+.guide-section-title::after{
+  content:'';flex:1;height:1px;background:linear-gradient(90deg,#ffe00040,transparent);
+}
+.guide-step{
+  display:flex;gap:12px;align-items:flex-start;
+  margin-bottom:10px;
+}
+.guide-step-num{
+  min-width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,#ff44ff,#0088ff);
+  color:#fff;font-size:13px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+}
+.guide-step-txt{font-size:13.5px;color:#ddd;line-height:1.65}
+.guide-step-txt b{color:#ffe000}
+.guide-step-txt em{color:#00ffff;font-style:normal;font-weight:700}
+.guide-feature{
+  background:rgba(255,255,255,.04);
+  border:1px solid #ffffff10;border-radius:12px;
+  padding:12px 14px;margin-bottom:9px;
+  display:flex;gap:12px;align-items:flex-start;
+}
+.guide-feature-icon{font-size:26px;line-height:1;flex-shrink:0}
+.guide-feature-body{font-size:13px;color:#ccc;line-height:1.65}
+.guide-feature-body b{color:#fff}
+.guide-tip{
+  background:linear-gradient(135deg,rgba(0,255,136,.08),rgba(0,136,255,.06));
+  border:1px solid #00ff8830;border-radius:12px;
+  padding:13px 16px;font-size:13px;color:#b0ffdd;line-height:1.7;
+}
+.guide-tip b{color:#00ff88}
+.guide-start-btn{
+  display:block;width:100%;margin-top:24px;
+  padding:14px;border-radius:14px;border:none;
+  background:linear-gradient(135deg,#ff44ff,#0088ff);
+  color:#fff;font-size:16px;font-weight:800;letter-spacing:2px;
+  cursor:pointer;
+  box-shadow:0 0 30px #ff44ff50;
+  transition:transform .15s,box-shadow .15s;
+}
+.guide-start-btn:hover{transform:translateY(-2px);box-shadow:0 0 50px #ff44ff80}
+</style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+
+<!-- START SCREEN -->
+<div id="start-screen" class="screen">
+  <div class="screen-emoji">🍕</div>
+  <div class="screen-title">우주 피자 배달부</div>
+  <div style="font-size:20px;color:#ff44ff;font-weight:700;letter-spacing:4px">SLICE MASTER</div>
+  <div class="screen-sub">
+    우주 정거장의 배고픈 외계인들이 기다리고 있어요!<br>
+    손님들의 주문(분수)을 보고 <b style="color:#ffe000">공통분모</b>를 선택해<br>
+    피자를 정확히 잘라 서빙하세요. 🚀
+  </div>
+  <div style="font-size:12px;color:#ffffff40;line-height:1.8">
+    💡 분수 통분 원리: ¾ 와 ⅔ → 공통분모 12 → 9/12 와 8/12<br>
+    ⭐ 최소공배수를 공통분모로 고르면 보너스!
+  </div>
+  <button class="screen-btn start" onclick="startGame()">🚀 게임 시작!</button>
+</div>
+
+<!-- GAME OVER SCREEN -->
+<div id="gameover-screen" class="screen" style="display:none; overflow-y:auto; gap:10px;">
+  <div class="screen-emoji" id="go-emoji">💸</div>
+  <div class="screen-title" id="go-title">파산!</div>
+  <div class="screen-sub" id="go-sub" style="margin-bottom:0"></div>
+
+  <!-- 교육 등급 배지 -->
+  <div id="go-edu-badge">🌟 S — 수학 천재</div>
+
+  <!-- 6개 스탯 카드 -->
+  <div id="go-stats-grid">
+    <div class="go-scard s-score">
+      <span class="go-scard-lbl">🏆 점수</span>
+      <span class="go-scard-val" id="go-score-val">0</span>
+    </div>
+    <div class="go-scard s-round">
+      <span class="go-scard-lbl">📦 라운드</span>
+      <span class="go-scard-val" id="go-round-val">0</span>
+    </div>
+    <div class="go-scard s-combo">
+      <span class="go-scard-lbl">🔥 최대 콤보</span>
+      <span class="go-scard-val" id="go-combo-val">0</span>
+    </div>
+    <div class="go-scard s-correct">
+      <span class="go-scard-lbl">✅ 정답 수</span>
+      <span class="go-scard-val" id="go-correct-val">0</span>
+    </div>
+    <div class="go-scard s-total">
+      <span class="go-scard-lbl">📝 총 문제</span>
+      <span class="go-scard-val" id="go-total-val">0</span>
+    </div>
+    <div class="go-scard s-acc">
+      <span class="go-scard-lbl">📊 정답률</span>
+      <span class="go-scard-val" id="go-acc-val">0%</span>
+    </div>
+  </div>
+
+  <!-- 닉네임 입력 + 등록 -->
+  <div id="go-nick-row">
+    <input id="go-nickname" type="text" maxlength="12" placeholder="🚀 닉네임 입력 (최대 12자)">
+    <button id="go-submit-btn" onclick="submitRanking()">🏆 랭킹 등록</button>
+  </div>
+  <div id="go-submit-msg"></div>
+
+  <!-- 랭킹 보기 -->
+  <div id="go-ranking-section">
+    <button id="go-ranking-btn" onclick="loadAndShowRanking()">📊 전체 랭킹 보기</button>
+    <div id="go-ranking-table"></div>
+  </div>
+
+  <button class="screen-btn restart" onclick="restartGame()">🔄 다시 도전!</button>
+</div>
+
+<!-- GAME UI -->
+<div id="game" style="display:none">
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-item">
+      <span class="hud-label">💰 자금</span>
+      <span class="hud-val hv-money" id="hud-money">₩1,000</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">⭐ 평판</span>
+      <div id="rep-bar-wrap">
+        <span class="hud-val hv-rep" id="hud-rep">100%</span>
+        <div id="rep-bar-bg"><div id="rep-bar" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">🎮 레벨</span>
+      <span class="hud-val hv-level" id="hud-level">Lv.1</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">🏆 점수</span>
+      <span class="hud-val hv-score" id="hud-score">0</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">📦 라운드</span>
+      <span class="hud-val" style="color:#fff" id="hud-round">1</span>
+    </div>
+    <div id="maint-wrap">
+      <span id="maint-label">🔧 유지비 카운트다운</span>
+      <div id="maint-bar-bg"><div id="maint-bar" style="width:100%"></div></div>
+      <span id="maint-cost-label">-₩30 / 25초</span>
+    </div>
+  </div>
+
+  <!-- Phase bar -->
+  <div id="phase-bar">
+    <div class="ph-step" id="ph0">① 주문 확인</div>
+    <div style="color:#ffffff20">›</div>
+    <div class="ph-step" id="ph1">② 통분 선택</div>
+    <div style="color:#ffffff20">›</div>
+    <div class="ph-step" id="ph2">③ 피자 서빙</div>
+    <div style="color:#ffffff20">›</div>
+    <div class="ph-step" id="ph3">④ 결과 확인</div>
+  </div>
+
+  <!-- Main area -->
+  <div id="main-area">
+    <!-- Customers -->
+    <div id="customers-panel">
+      <div id="customers-panel-title">👽 손님 대기열</div>
+      <div id="cust-0" class="cust-card waiting"></div>
+      <div id="cust-1" class="cust-card waiting"></div>
+      <!-- SHOP -->
+      <div id="shop">
+        <div id="shop-title">🛒 SHOP</div>
+        <div id="shop-row"></div>
+      </div>
+    </div>
+
+    <!-- Kitchen -->
+    <div id="kitchen-area">
+      <!-- Pizza stage -->
+      <div id="pizza-stage">
+        <div id="pizza-placeholder">
+          <div style="font-size:48px;margin-bottom:10px">🍕</div>
+          <div>손님 주문을 확인하고 통분 조각 수를 선택하세요</div>
+        </div>
+      </div>
+      <!-- Controls -->
+      <div id="controls-panel">
+        <div class="ctrl-title">🔪 공통 커팅기 — 통분 조각 수 선택</div>
+        <div id="denom-row"></div>
+        <div id="action-row"></div>
+      </div>
+    </div>
+
+    <!-- Numpad -->
+    <div id="numpad">
+      <div id="numpad-title">🔢 숫자 패드</div>
+      <div id="numpad-active">대상: <b>없음</b></div>
+      <div id="numpad-grid"></div>
+      <div id="numpad-log">
+        <div id="numpad-log-title">📡 로그</div>
+      </div>
+    </div>
+    <!-- Hidden legacy log container (kept for addLog compatibility) -->
+    <div id="info-log"><div id="info-log-title"></div></div>
+  </div>
+</div>
+
+<!-- Floating message -->
+<div id="float-msg"></div>
+
+<!-- PIZZA BOX TOWER -->
+<div id="box-tower"></div>
+<div id="tower-label">🍕 0/8</div>
+<div id="tower-shield" style="display:none">🧲 마그넷 보호</div>
+
+<!-- COMBO POPUP -->
+<div id="combo-popup-wrap">
+  <div id="combo-popup" onanimationend="this.textContent='';this.classList.remove('combo-burst');"></div>
+</div>
+
+<!-- ITEM MODAL -->
+<div id="item-modal-backdrop" onclick="if(event.target===this)closeItemModal()">
+  <div id="item-modal"></div>
+</div>
+
+<!-- FLOATING BUTTON GROUP -->
+<div id="float-btn-group">
+  <div id="ranking-btn" onclick="openRankingModal()">🏆 랭킹</div>
+  <div id="guide-btn" onclick="openGuide()">❓ 게임 방법</div>
+</div>
+
+<!-- RANKING MODAL -->
+<div id="rank-modal-backdrop" onclick="if(event.target===this)closeRankingModal()">
+  <div id="rank-modal">
+    <button id="rank-modal-close" onclick="closeRankingModal()">✕</button>
+    <div class="rank-modal-title">🏆 우주 피자 랭킹</div>
+    <div class="rank-modal-sub" id="rank-modal-sub">교육 종합 점수 기준 (정답률 60% · 점수 25% · 콤보 15%)</div>
+    <div class="rank-mode-tabs">
+      <button class="rank-tab active" data-sort="top"      onclick="switchRankTab('top')">🏅 종합</button>
+      <button class="rank-tab"        data-sort="accuracy" onclick="switchRankTab('accuracy')">📊 정답률</button>
+      <button class="rank-tab"        data-sort="score"    onclick="switchRankTab('score')">🏆 점수</button>
+      <button class="rank-tab"        data-sort="combo"    onclick="switchRankTab('combo')">🔥 콤보</button>
+      <button class="rank-tab"        data-sort="round"    onclick="switchRankTab('round')">📦 라운드</button>
+      <button class="rank-tab"        data-sort="grade"    onclick="switchRankTab('grade')">🎓 등급</button>
+      <button class="rank-tab"        data-sort="recent"   onclick="switchRankTab('recent')">🕐 최근</button>
+    </div>
+    <div id="rank-modal-table-wrap">
+      <div id="rank-modal-loading">🛸 랭킹을 불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 개인정보 확인 모달 -->
+<div id="privacy-backdrop">
+  <div id="privacy-modal">
+    <div id="privacy-icon">🔒</div>
+    <div id="privacy-title">개인정보가 포함된 것 같아요!</div>
+    <div id="privacy-body">닉네임에 개인정보가 포함되면<br>다른 사람에게 노출될 수 있어요.</div>
+    <div id="privacy-detected" style="display:none"></div>
+    <div class="privacy-actions">
+      <button id="privacy-re-enter" onclick="privacyReEnter()">✏️ 다시 입력하기</button>
+      <button id="privacy-confirm"  onclick="privacyProceed()">그냥 등록할게요</button>
+    </div>
+  </div>
+</div>
+
+<!-- GUIDE MODAL -->
+<div id="guide-backdrop" onclick="if(event.target===this)closeGuide()">
+  <div id="guide-modal">
+    <button id="guide-close" onclick="closeGuide()">✕</button>
+
+    <div class="guide-hero">
+      <div class="guide-hero-emoji">🍕🚀</div>
+      <div class="guide-hero-title">작전 브리핑!</div>
+      <div class="guide-hero-sub">우주 피자 가게 사장이 되어 외계인 손님들을 만족시켜라!</div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-title">🌌 스토리</div>
+      <div style="font-size:13.5px;color:#ccc;line-height:1.75;background:rgba(255,68,255,.05);border:1px solid #ff44ff20;border-radius:12px;padding:14px 16px">
+        우주 정거장 <b style="color:#ff44ff">슬라이스-7</b>에 위기가 닥쳤다!<br>
+        배고픈 외계인들은  <em style="color:#ffe000">조각 피자</em>만 먹는다.<br>
+        조금이라도 틀리면 화를 내고 평판이 뚝 떨어진다! 🛸<br>
+        정확한 서빙으로 모든 손님을 만족시키고 <b style="color:#00ffff">은하계 최고 피자 마스터</b>가 되어라!
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-title">🎮 게임 방법</div>
+      <div class="guide-step">
+        <div class="guide-step-num">1</div>
+        <div class="guide-step-txt">손님 카드에서 <b>분수 주문</b>을 확인하세요.<br>
+          예) 왼쪽 손님 <b>¾</b>, 오른쪽 손님 <b>⅔</b></div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-step-num">2</div>
+        <div class="guide-step-txt"><b>통분 조각 수</b>(공통분모)를 선택하세요.<br>
+          <em>12</em>를 고르면 → <b>¾ = 9/12, ⅔ = 8/12</b><br>
+          <b style="color:#00ff88">LCM(최소공배수)</b>를 고르면 보너스 포인트!🌟</div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-step-num">3</div>
+        <div class="guide-step-txt">피자 조각을 <b>클릭</b>하거나 숫자를 <b>입력</b>해서<br>
+          각 손님에게 맞는 조각 수를 맞춰주세요!</div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-step-num">4</div>
+        <div class="guide-step-txt"><b style="color:#ff44ff">서빙!</b> 정확하게 맞추면 💰돈과 ⭐평판이 올라가요.<br>
+          틀리거나 시간이 초과되면 평판이 감소해요.</div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-title">🍕 피자 박스 탑 &amp; 🔥 FEVER TIME</div>
+      <div class="guide-feature">
+        <div class="guide-feature-icon">📦</div>
+        <div class="guide-feature-body">서빙에 성공할 때마다 <b>피자 박스</b>가 쌓여요!<br>
+          연속 성공으로 탑을 높이 쌓을수록 <b>COMBO</b>가 터져요!</div>
+      </div>
+      <div class="guide-feature">
+        <div class="guide-feature-icon">🔥</div>
+        <div class="guide-feature-body"><b style="color:#ff4444">8개</b>를 쌓으면 <b style="color:#ff8800">FEVER TIME 발동!</b><br>
+          10초간 유지비 걱정 없이 마음껏 배달할 수 있어요!</div>
+      </div>
+      <div class="guide-feature">
+        <div class="guide-feature-icon">💥</div>
+        <div class="guide-feature-body">틀리거나 시간 초과 시 탑이 <b>와르르 무너져요!</b><br>
+          탑이 높을수록 집중해서 정확하게 맞춰야 해요!</div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-title">🛒 특수 아이템</div>
+      <div class="guide-feature">
+        <div class="guide-feature-icon">💣</div>
+        <div class="guide-feature-body"><b>토핑 폭탄</b> — 잘못 잘랐을 때 사용!<br>
+          통분 선택 단계로 되돌아가 다시 시작해요. (탑 안전!)</div>
+      </div>
+      <div class="guide-feature">
+        <div class="guide-feature-icon">🧲</div>
+        <div class="guide-feature-body"><b>타워 마그넷</b> — 실패해도 탑이 안 무너져요!<br>
+          미리 사둬야 효과가 발동돼요.</div>
+      </div>
+      <div class="guide-feature">
+        <div class="guide-feature-icon">🥽</div>
+        <div class="guide-feature-body"><b>X-Ray 고글</b> — 통분 선택 단계에서 사용!<br>
+          가능한 공통분모 후보가 반짝반짝 빛나며 알려줘요.</div>
+      </div>
+    </div>
+
+    <div class="guide-tip">
+      💡 <b>수학 꿀팁!</b><br>
+      두 분수의 분모를 보고 <b>공통분모</b>를 찾는 게 핵심이에요.<br>
+      예) ¾ 와 ⅔ → 분모 3과 4의 최소공배수 = <b>12</b> → 9/12, 8/12<br>
+      최소공배수를 공통분모로 고르면 가장 적은 조각으로 정확하게 나눌 수 있어요!
+    </div>
+
+    <button class="guide-start-btn" onclick="closeGuide()">🚀 알겠어요! 바로 시작!</button>
+  </div>
+</div>
+
+<!-- FEVER OVERLAY -->
+<div id="fever-overlay">
+  <div id="fever-bg"></div>
+  <div id="fever-banner">🔥 FEVER TIME! 🔥</div>
+  <div id="fever-sub">10초간 유지비 지출 정지!</div>
+  <div id="fever-bar-wrap">
+    <div id="fever-bar-lbl">⏱ FEVER</div>
+    <div id="fever-bar-bg"><div id="fever-bar-inner" style="width:100%"></div></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   STARS
+═══════════════════════════════════════════════ */
+const canvas = document.getElementById('stars-canvas');
+const ctx = canvas.getContext('2d');
+let stars = [];
+function initStars() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  stars = [];
+  for (let i = 0; i < 200; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + .2,
+      a: Math.random(),
+      da: (Math.random() - .5) * .005,
+      twinkle: Math.random() * Math.PI * 2,
+    });
+  }
+}
+function drawStars(ts) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    s.twinkle += .02;
+    const brightness = .3 + .7 * Math.abs(Math.sin(s.twinkle));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${brightness * s.a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+window.addEventListener('resize', initStars);
+initStars();
+requestAnimationFrame(drawStars);
+
+/* ═══════════════════════════════════════════════
+   MATH UTILS
+═══════════════════════════════════════════════ */
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+function lcm(a, b) { return Math.abs(a * b) / gcd(a, b); }
+function frac(n, d) {
+  return `<span class="frac"><span class="frac-num">${n}</span><span class="frac-bar"></span><span class="frac-den">${d}</span></span>`;
+}
+
+/* ═══════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════ */
+const LEVELS = [
+  {
+    name:'우주 견습생',
+    orders:[{n:1,d:2},{n:1,d:3},{n:1,d:4},{n:3,d:4},{n:2,d:3},{n:2,d:4},{n:1,d:6},{n:5,d:6}],
+    denoms:[4,6,8,12,24],
+    waitTime:40, maintCost:30, maintInterval:25,
+    levelScore:400,
+    bonus: 80,
+  },
+  {
+    name:'별빛 요리사',
+    orders:[{n:3,d:4},{n:2,d:3},{n:5,d:6},{n:3,d:8},{n:5,d:8},{n:7,d:12},{n:5,d:12},{n:11,d:12}],
+    denoms:[6,8,12,15,24,30],
+    waitTime:32, maintCost:55, maintInterval:22,
+    levelScore:800,
+    bonus:120,
+  },
+  {
+    name:'은하 마스터',
+    orders:[{n:7,d:8},{n:5,d:6},{n:11,d:12},{n:7,d:10},{n:9,d:10},{n:13,d:15},{n:7,d:15},{n:11,d:20}],
+    denoms:[10,12,15,20,24,30],
+    waitTime:26, maintCost:80, maintInterval:20,
+    levelScore:Infinity,
+    bonus:180,
+  },
+];
+
+const ALIENS = [
+  {name:'제트로이드', emoji:'👽'},
+  {name:'루나봇',     emoji:'🤖'},
+  {name:'스타실',     emoji:'🦁'},
+  {name:'네뷸라',     emoji:'👸'},
+  {name:'코스모스',   emoji:'🐱'},
+  {name:'아스트로',   emoji:'🧑‍🚀'},
+  {name:'크레이터',   emoji:'🦊'},
+  {name:'가이아',     emoji:'🌙'},
+  {name:'포톤',       emoji:'👾'},
+  {name:'보이저',     emoji:'🛸'},
+];
+
+/* ═══════════════════════════════════════════════
+   GAME STATE
+═══════════════════════════════════════════════ */
+let G = {};
+
+function freshState() {
+  return {
+    money: 1000,
+    reputation: 100,
+    score: 0,
+    level: 0, // index into LEVELS
+    phase: 'IDLE', // IDLE | ORDER | CUT | SERVE | RESULT
+    customers: [],
+    chosenDenom: null,
+    selectedSlices: [0, 0],
+    maintTimeLeft: 0,
+    maintTimer: null,
+    tickTimer: null,
+    roundCount: 0,
+    msgTimer: null,
+    boxStack: 0,
+    feverActive: false,
+    feverTimer: null,
+    feverTimeLeft: 0,
+    shipInterval: null,
+    inventory: { toppingBomb: 0, towerMagnet: 0, xrayGoggles: 0 },
+    xrayActive: false,
+    // 랭킹 통계
+    maxCombo: 0,      // 도달한 최대 피자 박스 탑 높이
+    correctCount: 0,  // 정확히 맞춘 서빙 수
+    totalCount: 0,    // 총 서빙 시도 수
+  };
+}
+
+/* ═══════════════════════════════════════════════
+   PIZZA SVG HELPERS
+═══════════════════════════════════════════════ */
+const PIZZA_TOPPINGS = (function() {
+  const pos = [
+    {r:.22,a:1.1},{r:.55,a:.3},{r:.65,a:1.9},{r:.4,a:3.0},
+    {r:.7,a:3.8},{r:.5,a:5.0},{r:.3,a:5.8},{r:.72,a:2.6},
+    {r:.6,a:4.4},{r:.35,a:.9},{r:.65,a:1.2},
+  ];
+  return pos;
+})();
+
+function makePizzaSVG(pizzaIdx, denom, selectedCount) {
+  const W=280, H=280, cx=140, cy=140, r=118, cr=128;
+  const needed = G.customers[pizzaIdx]
+    ? Math.round(G.customers[pizzaIdx].numerator * denom / G.customers[pizzaIdx].denominator)
+    : 0;
+
+  // toppings
+  let toppingsSVG = '';
+  PIZZA_TOPPINGS.forEach(p => {
+    const x = (cx + p.r * r * Math.cos(p.a)).toFixed(1);
+    const y = (cy + p.r * r * Math.sin(p.a)).toFixed(1);
+    toppingsSVG += `<circle cx="${x}" cy="${y}" r="9" fill="#cc2200" opacity=".85"/>`;
+    toppingsSVG += `<circle cx="${x}" cy="${y}" r="5.5" fill="#ff3300" opacity=".7"/>`;
+  });
+  // cheese blobs
+  [[.3,.7,.5],[.65,1.5,.4],[.5,4.0,.45],[.4,2.5,.35],[.6,3.3,.5]].forEach(([rad,ang,sz]) => {
+    const x = (cx + rad*r*Math.cos(ang)).toFixed(1);
+    const y = (cy + rad*r*Math.sin(ang)).toFixed(1);
+    toppingsSVG += `<ellipse cx="${x}" cy="${y}" rx="${sz*18}" ry="${sz*14}" fill="#ffd060" opacity=".7" transform="rotate(${ang*30} ${x} ${y})"/>`;
+  });
+
+  // slices
+  let slicesSVG = '';
+  let linesSVG = '';
+  for (let i = 0; i < denom; i++) {
+    const a1 = (i / denom) * 2 * Math.PI - Math.PI / 2;
+    const a2 = ((i + 1) / denom) * 2 * Math.PI - Math.PI / 2;
+    const x1 = (cx + r * Math.cos(a1)).toFixed(2);
+    const y1 = (cy + r * Math.sin(a1)).toFixed(2);
+    const x2 = (cx + r * Math.cos(a2)).toFixed(2);
+    const y2 = (cy + r * Math.sin(a2)).toFixed(2);
+    const la = (a2 - a1 > Math.PI) ? 1 : 0;
+    const d = `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${la},1 ${x2},${y2} Z`;
+    const isSelected = i < selectedCount;
+    const isNeeded = i < needed && !isSelected;
+    let cls = 'pizza-slice-overlay';
+    if (isSelected) cls += ' selected';
+    else if (isNeeded) cls += ' needed-hint';
+
+    slicesSVG += `<path d="${d}" class="${cls}" data-pizza="${pizzaIdx}" data-slice="${i}" onclick="clickSlice(${pizzaIdx},${i})"/>`;
+
+    // cut line from center outward
+    const lx = (cx + cr * Math.cos(a1)).toFixed(2);
+    const ly = (cy + cr * Math.sin(a1)).toFixed(2);
+    const delay = (i * 0.04).toFixed(2);
+    linesSVG += `<line class="cut-line" x1="${cx}" y1="${cy}" x2="${lx}" y2="${ly}" style="animation-delay:${delay}s"/>`;
+  }
+
+  const filterID = `glow${pizzaIdx}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="220" height="220">
+    <defs>
+      <radialGradient id="pg${pizzaIdx}" cx="40%" cy="35%">
+        <stop offset="0%" stop-color="#ffe566"/>
+        <stop offset="55%" stop-color="#e8980a"/>
+        <stop offset="100%" stop-color="#b86010"/>
+      </radialGradient>
+      <filter id="${filterID}" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <!-- crust -->
+    <circle cx="${cx}" cy="${cy}" r="${cr}" fill="#4a2100"/>
+    <!-- cheese -->
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#pg${pizzaIdx})"/>
+    <!-- sauce ring -->
+    <circle cx="${cx}" cy="${cy}" r="${(r*.88).toFixed(0)}" fill="none" stroke="#cc3311" stroke-width="8" opacity=".3"/>
+    <!-- toppings -->
+    ${toppingsSVG}
+    <!-- slice cut lines -->
+    <g>${linesSVG}</g>
+    <!-- interactive overlays -->
+    <g>${slicesSVG}</g>
+    <!-- center -->
+    <circle cx="${cx}" cy="${cy}" r="7" fill="#2a1000" stroke="#00ffff" stroke-width="1.2"/>
+  </svg>`;
+}
+
+/* ═══════════════════════════════════════════════
+   CUSTOMER CARD RENDER
+═══════════════════════════════════════════════ */
+function renderCustomerCard(idx) {
+  const c = G.customers[idx];
+  const el = document.getElementById(`cust-${idx}`);
+  if (!el) return;
+
+  if (!c) {
+    el.innerHTML = '<div style="text-align:center;color:#ffffff20;font-size:28px;padding:30px 0">👤</div>';
+    el.className = 'cust-card waiting';
+    return;
+  }
+
+  const pct = Math.max(0, c.waitTimeLeft / c.maxWaitTime * 100);
+  const warnClass = pct < 30 ? 'warn' : '';
+
+  // Status message
+  let statusMsg = '';
+  let statusColor = '';
+  if (c.timedOut) { statusMsg = '⏰ 시간 초과... 떠났어요'; statusColor = '#888'; }
+  else if (c.satisfied) { statusMsg = '😄 맛있어요! 감사합니다!'; statusColor = '#00ff88'; }
+  else if (c.failed) { statusMsg = c.failMsg || '😠 화났어요!'; statusColor = '#ff4444'; }
+  else if (G.phase === 'SERVE' && !c.served) { statusMsg = '🍕 서빙해 주세요!'; statusColor = '#00ffff'; }
+  else { statusMsg = '👀 주문 대기중...'; statusColor = '#ffe00088'; }
+
+  // Card class
+  let cardClass = 'cust-card';
+  if (c.timedOut) cardClass += ' timeout';
+  else if (c.satisfied) cardClass += ' satisfied';
+  else if (c.failed) cardClass += ' failed';
+  else if (G.phase === 'SERVE' && !c.served) cardClass += ' active-serve';
+  else cardClass += ' waiting';
+
+  el.className = cardClass;
+
+  // Serve button
+  const canServe = G.phase === 'SERVE' && !c.served && !c.timedOut;
+  const sel = G.selectedSlices[idx];
+
+  el.innerHTML = `
+    <div class="cust-avatar">${c.emoji}</div>
+    <div class="cust-name">${c.name}</div>
+    <div class="cust-order-box">
+      <div class="cust-order-label">주문 피자</div>
+      <span class="fraction">
+        <span>${c.numerator}</span>
+        <span class="fraction-line"></span>
+        <span>${c.denominator}</span>
+      </span>
+    </div>
+    <div class="wait-bar-wrap">
+      <div class="wait-bar-bg">
+        <div class="wait-bar ${warnClass}" style="width:${pct}%"></div>
+      </div>
+      <div class="wait-time-label">⏱ ${c.waitTimeLeft.toFixed(0)}초</div>
+    </div>
+    <div class="cust-status-msg" style="color:${statusColor}">${statusMsg}</div>
+    ${canServe ? `<div class="serve-sel-display" style="font-size:13px;color:#ffe000;text-align:center;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px">${frac(sel, G.chosenDenom)} <span>조각 선택됨</span></div>
+    <button class="cust-serve-btn active-btn" onclick="serveCustomer(${idx})">🍕 서빙!</button>` : ''}
+  `;
+}
+
+function renderAllCustomers() {
+  renderCustomerCard(0);
+  renderCustomerCard(1);
+}
+
+/* ═══════════════════════════════════════════════
+   PIZZA STAGE RENDER
+═══════════════════════════════════════════════ */
+function renderPizzaStage() {
+  const stage = document.getElementById('pizza-stage');
+
+  if (G.phase === 'IDLE' || G.phase === 'ORDER') {
+    stage.innerHTML = `<div id="pizza-placeholder">
+      <div style="font-size:52px;margin-bottom:12px">🍕</div>
+      <div style="font-size:13px;color:#ffffff30;letter-spacing:2px">
+        ${G.phase === 'ORDER' ? '통분 조각 수를 선택하면 피자가 나타납니다' : '손님 주문을 확인하고 통분 조각 수를 선택하세요'}
+      </div>
+    </div>`;
+    return;
+  }
+  if (G.phase === 'RESULT') return; // keep as-is
+
+  const denom = G.chosenDenom;
+  if (!denom) {
+    stage.innerHTML = `<div id="pizza-placeholder">
+      <div style="font-size:52px;margin-bottom:12px">🍕</div>
+      <div style="font-size:13px;color:#ffffff30;letter-spacing:2px">통분 조각 수를 선택하면 피자가 나타납니다</div>
+    </div>`;
+    return;
+  }
+
+  // Show 2 pizzas side by side
+  let pizzasHTML = '';
+  for (let i = 0; i < G.customers.length; i++) {
+    const c = G.customers[i];
+    const sel = G.selectedSlices[i];
+    const label = c.served
+      ? (c.satisfied ? `✅ ${c.name}` : `❌ ${c.name}`)
+      : `<span style="display:inline-flex;align-items:center;gap:6px">${c.emoji} ${c.name} <span style="font-size:11px;color:#ffffff80">주문:</span> ${frac(c.numerator, c.denominator)}</span>`;
+    const hint = '';
+
+    const inputDisabled = c.served || c.timedOut;
+    pizzasHTML += `
+      <div class="pizza-wrap" data-pizza-wrap="${i}">
+        <div class="pizza-wrap-title">${label}</div>
+        <div class="pizza-svg-outer">${makePizzaSVG(i, denom, sel)}</div>
+        <div class="slice-input-wrap">
+          <div class="frac-with-input">
+            <input type="number" class="slice-input" id="slice-input-${i}"
+              min="0" max="${denom}" value="${sel > 0 ? sel : ''}"
+              ${inputDisabled ? 'disabled' : ''}
+              onfocus="setActivePizza(${i})"
+              oninput="onSliceInputChange(${i}, this.value)">
+            <div class="frac-bar-input"></div>
+            <span class="frac-input-den">${denom}</span>
+          </div>
+          <span class="slice-input-suffix">조각</span>
+        </div>
+        <div class="pizza-slice-hint">${hint}</div>
+      </div>`;
+  }
+
+  stage.innerHTML = pizzasHTML;
+  renderNumpad();
+}
+
+/* ═══════════════════════════════════════════════
+   CONTROLS RENDER
+═══════════════════════════════════════════════ */
+function renderControls() {
+  // Denominator input
+  const denomRow = document.getElementById('denom-row');
+  if (G.phase === 'ORDER') {
+    const prevVal = document.getElementById('denom-input')?.value || '';
+    // X-Ray Goggles: show valid denominator suggestions (only when active)
+    let xrayHTML = '';
+    if (G.xrayActive && G.customers.length === 2) {
+      const lvlDenoms = LEVELS[G.level].denoms || [];
+      const optimal = lcm(G.customers[0].denominator, G.customers[1].denominator);
+      const valids = lvlDenoms.filter(d =>
+        d % G.customers[0].denominator === 0 &&
+        d % G.customers[1].denominator === 0
+      );
+      // ensure LCM is included
+      if (!valids.includes(optimal)) valids.unshift(optimal);
+      valids.sort((a,b)=>a-b);
+      if (valids.length > 0) {
+        xrayHTML = `<div class="xray-suggestions">
+          <div class="xray-label">🥽 X-RAY 추천 공통분모</div>
+          ${valids.map(d => `<button type="button" class="xray-chip ${d===optimal?'optimal':''}" onclick="pickXrayChip(${d})">${d}</button>`).join('')}
+        </div>`;
+      }
+    }
+    denomRow.innerHTML = `
+      <div class="denom-input-group">
+        <label class="denom-input-label">통분 조각 수 (공통분모):</label>
+        <input type="number" id="denom-input" min="2" max="200" placeholder="예: 12"
+               value="${prevVal}" autocomplete="off"
+               oninput="this.classList.toggle('has-value', this.value.length>0)"
+               onkeydown="if(event.key==='Enter'){submitDenom();}"
+               class="${prevVal ? 'has-value' : ''}">
+        <button class="act-btn cut" onclick="submitDenom()">🔪 커팅!</button>
+      </div>
+      ${xrayHTML}
+      <div class="denom-hint">💡 두 손님의 분모로 모두 나누어떨어지는 수를 입력하세요</div>
+    `;
+    setTimeout(() => document.getElementById('denom-input')?.focus(), 50);
+  } else if (G.phase === 'CUT' || G.phase === 'SERVE') {
+    denomRow.innerHTML = `<div class="chosen-display">선택한 통분: <b>${G.chosenDenom}</b>조각</div>`;
+  } else if (G.phase === 'RESULT') {
+    // 서빙 완료 후 공통분모 해설 표시
+    const d0 = G.customers[0]?.denominator ?? 1;
+    const d1 = G.customers[1]?.denominator ?? 1;
+    const optimalLCM = lcm(d0, d1);
+    const lvlDenoms  = LEVELS[G.level].denoms || [];
+    const validList  = lvlDenoms.filter(d => d % d0 === 0 && d % d1 === 0);
+    if (!validList.includes(optimalLCM)) validList.unshift(optimalLCM);
+    validList.sort((a, b) => a - b);
+    const chosen = G.chosenDenom;
+    const isLCM  = chosen === optimalLCM;
+    const chipsHTML = validList.map(d => {
+      const cls = d === optimalLCM ? 'result-denom-chip lcm' : 'result-denom-chip';
+      const tag = d === optimalLCM ? ' ★LCM' : '';
+      return `<span class="${cls}">${d}${tag}</span>`;
+    }).join('');
+    denomRow.innerHTML = `
+      <div class="result-denom-wrap">
+        <div class="result-denom-row">
+          <span class="result-denom-label">내가 선택한 통분:</span>
+          <span class="result-denom-chosen ${isLCM ? 'is-lcm' : ''}">${chosen}${isLCM ? ' ✦ 최소공배수!' : ''}</span>
+        </div>
+        <div class="result-denom-row" style="margin-top:6px">
+          <span class="result-denom-label">가능한 공통분모:</span>
+          <span class="result-denom-chips">${chipsHTML}</span>
+        </div>
+        <div class="result-denom-hint">
+          ★ 표시가 <b>최소공배수(LCM)</b>예요 — 가장 적은 조각 수로 두 손님 모두 만족시킬 수 있어요!
+        </div>
+      </div>
+    `;
+  } else {
+    denomRow.innerHTML = '';
+  }
+
+  // Action buttons
+  const actionRow = document.getElementById('action-row');
+  if (G.phase === 'ORDER') {
+    actionRow.innerHTML = `<button class="act-btn skip" onclick="skipRound()">⏭ 스킵 (평판 -5)</button>`;
+  } else if (G.phase === 'CUT') {
+    actionRow.innerHTML = `<div style="color:#00ffff;font-size:13px;text-align:center;padding:8px">🔪 피자를 ${G.chosenDenom}조각으로 커팅 중...</div>`;
+  } else if (G.phase === 'SERVE') {
+    const allServed = G.customers.every(c => c.served || c.timedOut);
+    actionRow.innerHTML = allServed
+      ? `<button class="act-btn next-round" onclick="nextRound()">🚀 다음 손님!</button>`
+      : `<div style="color:#ffffff40;font-size:12px;text-align:center;padding:8px">각 피자에서 조각을 클릭해 선택 후 손님 카드의 [서빙!] 버튼을 누르세요</div>`;
+  } else if (G.phase === 'RESULT') {
+    actionRow.innerHTML = `<button class="act-btn next-round" onclick="nextRound()">🚀 다음 손님!</button>`;
+  }
+}
+
+function submitDenom() {
+  const input = document.getElementById('denom-input');
+  if (!input) return;
+  const d = parseInt(input.value);
+  if (!d || d < 2 || d > 200) return; // 범위 밖이면 조용히 무시
+  if (!G.customers.every(c => d % c.denominator === 0)) return; // 공통분모 아니면 조용히 무시
+  selectDenom(d);
+}
+
+/* ═══════════════════════════════════════════════
+   HUD RENDER
+═══════════════════════════════════════════════ */
+function renderHUD() {
+  document.getElementById('hud-money').textContent = `₩${G.money.toLocaleString()}`;
+  document.getElementById('hud-rep').textContent = `${Math.max(0,Math.round(G.reputation))}%`;
+  document.getElementById('hud-level').textContent = `Lv.${G.level + 1}`;
+  document.getElementById('hud-score').textContent = G.score.toLocaleString();
+  document.getElementById('hud-round').textContent = G.roundCount;
+
+  const rep = Math.max(0, Math.min(100, G.reputation));
+  document.getElementById('rep-bar').style.width = rep + '%';
+  document.getElementById('rep-bar').style.background =
+    rep > 60 ? 'linear-gradient(90deg,#00ff88,#ffe000)' :
+    rep > 30 ? 'linear-gradient(90deg,#ffe000,#ff8800)' :
+               'linear-gradient(90deg,#ff8800,#ff4444)';
+
+  const lvlData = LEVELS[G.level];
+  document.getElementById('maint-cost-label').textContent =
+    `-₩${lvlData.maintCost} / ${lvlData.maintInterval}초`;
+  document.getElementById('maint-bar').style.width =
+    `${(G.maintTimeLeft / lvlData.maintInterval * 100).toFixed(1)}%`;
+}
+
+/* ═══════════════════════════════════════════════
+   PHASE BAR
+═══════════════════════════════════════════════ */
+function renderPhaseBar() {
+  const map = { ORDER:0, CUT:1, SERVE:2, RESULT:3 };
+  [0,1,2,3].forEach(i => {
+    const el = document.getElementById(`ph${i}`);
+    el.classList.toggle('active', map[G.phase] === i);
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   FULL RENDER
+═══════════════════════════════════════════════ */
+function render() {
+  renderHUD();
+  renderPhaseBar();
+  renderAllCustomers();
+  renderPizzaStage();
+  renderControls();
+  renderNumpad();
+  renderShop();
+}
+
+/* ═══════════════════════════════════════════════
+   MESSAGES
+═══════════════════════════════════════════════ */
+function showMsg(text, type='info', ms=2000) {
+  const el = document.getElementById('float-msg');
+  if (G.msgTimer) clearTimeout(G.msgTimer);
+  el.innerHTML = `<div class="fmsg ${type}">${text}</div>`;
+  G.msgTimer = setTimeout(() => { el.innerHTML = ''; }, ms);
+}
+
+function addLog(text, type='info') {
+  const log = document.getElementById('info-log');
+  const entry = document.createElement('div');
+  entry.className = `log-entry log-${type}`;
+  entry.textContent = text;
+  // Insert after title
+  const title = document.getElementById('info-log-title');
+  log.insertBefore(entry, title.nextSibling);
+  // Keep max 12 entries
+  while (log.children.length > 13) log.removeChild(log.lastChild);
+}
+
+/* ═══════════════════════════════════════════════
+   MONEY / REPUTATION
+═══════════════════════════════════════════════ */
+function addMoney(amount) {
+  G.money += amount;
+}
+function spendMoney(amount) {
+  G.money -= amount;
+}
+function loseRep(amount) {
+  G.reputation = Math.max(0, G.reputation - amount);
+}
+function gainRep(amount) {
+  G.reputation = Math.min(100, G.reputation + amount);
+}
+
+/* ═══════════════════════════════════════════════
+   GAME OVER CHECK
+═══════════════════════════════════════════════ */
+function checkGameOver() {
+  if (G.money <= 0) {
+    showGameOver('파산! 💸', '우주 정거장 유지비가 부족해요...', '💸');
+    return true;
+  }
+  if (G.reputation <= 0) {
+    showGameOver('폐업! 😔', '평판이 바닥을 쳤어요. 손님들이 모두 떠났습니다...', '📉');
+    return true;
+  }
+  return false;
+}
+
+/* ═══════════════════════════════════════════════
+   LEVEL UP
+═══════════════════════════════════════════════ */
+function checkLevelUp() {
+  const nextLevel = G.level + 1;
+  if (nextLevel < LEVELS.length && G.score >= LEVELS[G.level].levelScore) {
+    G.level = nextLevel;
+    showMsg(`🎉 레벨 업! ${LEVELS[nextLevel].name}으로 승급!`, 'success', 3000);
+    addLog(`🎉 Lv.${nextLevel+1} 승급!`, 'success');
+    // Reset maintenance timer for new level
+    const lvlData = LEVELS[G.level];
+    G.maintTimeLeft = lvlData.maintInterval;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   MAINTENANCE TIMER
+═══════════════════════════════════════════════ */
+function startMaintTimer() {
+  if (G.maintTimer) clearInterval(G.maintTimer);
+  G.maintTimeLeft = LEVELS[G.level].maintInterval;
+  G.maintTimer = setInterval(() => {
+    G.maintTimeLeft -= .5;
+    if (G.maintTimeLeft <= 0) {
+      if (!G.feverActive) {
+        const cost = LEVELS[G.level].maintCost;
+        spendMoney(cost);
+        addLog(`🔧 유지비 -₩${cost}`, 'warning');
+        if (checkGameOver()) {
+          stopAll();
+          return;
+        }
+      } else {
+        addLog(`🔥 피버! 유지비 면제`, 'success');
+      }
+      G.maintTimeLeft = LEVELS[G.level].maintInterval;
+      renderShop();
+    }
+    renderHUD();
+  }, 500);
+}
+
+/* ═══════════════════════════════════════════════
+   CUSTOMER TICK TIMER
+═══════════════════════════════════════════════ */
+function startCustomerTimers() {
+  if (G.tickTimer) clearInterval(G.tickTimer);
+  G.tickTimer = setInterval(() => {
+    if (G.phase !== 'ORDER' && G.phase !== 'CUT' && G.phase !== 'SERVE') return;
+
+    G.customers.forEach((c, idx) => {
+      if (c.served || c.timedOut) return;
+      c.waitTimeLeft -= .1;
+      if (c.waitTimeLeft <= 0) {
+        c.waitTimeLeft = 0;
+        c.timedOut = true;
+        c.served = true;
+        loseRep(10);
+        collapseTower();
+        addLog(`⏰ ${c.name} 시간 초과! -10%`, 'error');
+        showMsg(`⏰ ${c.name}이(가) 떠났어요!`, 'error', 1500);
+        // Full re-render only on state change
+        renderCustomerCard(idx);
+        checkRoundEnd();
+      } else {
+        // Lightweight update — only the timer bar/text, NOT the whole card
+        updateCustomerTimer(idx);
+      }
+    });
+  }, 100);
+}
+
+function updateCustomerTimer(idx) {
+  const c = G.customers[idx];
+  if (!c) return;
+  const card = document.getElementById(`cust-${idx}`);
+  if (!card) return;
+  const bar = card.querySelector('.wait-bar');
+  const lbl = card.querySelector('.wait-time-label');
+  if (!bar || !lbl) return;
+  const pct = Math.max(0, c.waitTimeLeft / c.maxWaitTime * 100);
+  bar.style.width = pct + '%';
+  if (pct < 30 && !bar.classList.contains('warn')) bar.classList.add('warn');
+  lbl.textContent = `⏱ ${c.waitTimeLeft.toFixed(0)}초`;
+}
+
+/* ═══════════════════════════════════════════════
+   CREATE CUSTOMER
+═══════════════════════════════════════════════ */
+function createCustomer() {
+  const lvlData = LEVELS[G.level];
+  const alien = ALIENS[Math.floor(Math.random() * ALIENS.length)];
+  const order = lvlData.orders[Math.floor(Math.random() * lvlData.orders.length)];
+  return {
+    ...alien,
+    numerator: order.n,
+    denominator: order.d,
+    waitTimeLeft: lvlData.waitTime,
+    maxWaitTime: lvlData.waitTime,
+    served: false,
+    timedOut: false,
+    satisfied: false,
+    failed: false,
+    failMsg: '',
+    tip: Math.floor(80 + Math.random() * 160),
+  };
+}
+
+/* ═══════════════════════════════════════════════
+   PHASES
+═══════════════════════════════════════════════ */
+function setPhase(phase) {
+  G.phase = phase;
+  render();
+}
+
+function newRound() {
+  G.roundCount++;
+  G.chosenDenom = null;
+  G.selectedSlices = [0, 0];
+  G.xrayActive = false;
+
+  // Make sure 2 different customers
+  const c0 = createCustomer();
+  let c1 = createCustomer();
+  let tries = 0;
+  while (c1.denominator === c0.denominator && tries++ < 10) c1 = createCustomer();
+  G.customers = [c0, c1];
+
+  setPhase('ORDER');
+  startCustomerTimers();
+}
+
+function selectDenom(d) {
+  if (G.phase !== 'ORDER') return;
+  if (!G.customers.every(c => d % c.denominator === 0)) return; // 조용히 무시
+
+  G.chosenDenom = d;
+  G.selectedSlices = [0, 0];
+  G.activePizzaInput = 0;
+  G.xrayActive = false; // X-Ray consumed once denom is locked in
+  setPhase('CUT');
+
+  // Brief cutting animation delay, then serve phase
+  setTimeout(() => {
+    setPhase('SERVE');
+    renderNumpad();
+  }, 600);
+}
+
+function clickSlice(pizzaIdx, sliceIdx) {
+  if (G.phase !== 'SERVE') return;
+  const c = G.customers[pizzaIdx];
+  if (!c || c.served || c.timedOut) return;
+
+  const newCount = sliceIdx + 1;
+  if (G.selectedSlices[pizzaIdx] === newCount) {
+    G.selectedSlices[pizzaIdx] = 0;
+  } else {
+    G.selectedSlices[pizzaIdx] = newCount;
+  }
+  setActivePizza(pizzaIdx);
+  updateSlicesLightweight(pizzaIdx);
+}
+
+function setActivePizza(idx) {
+  G.activePizzaInput = idx;
+  renderNumpad();
+}
+
+function onSliceInputChange(idx, val) {
+  const denom = G.chosenDenom;
+  let n = parseInt(val);
+  if (isNaN(n) || n < 0) n = 0;
+  if (n > denom) n = denom;
+  G.selectedSlices[idx] = n;
+  updateSlicesLightweight(idx, /*skipInput=*/true);
+}
+
+function updateSlicesLightweight(pizzaIdx, skipInput) {
+  const sel = G.selectedSlices[pizzaIdx];
+  const denom = G.chosenDenom;
+  const c = G.customers[pizzaIdx];
+  const needed = c ? Math.round(c.numerator * denom / c.denominator) : 0;
+
+  // Update SVG slice highlights
+  document.querySelectorAll(`path[data-pizza="${pizzaIdx}"]`).forEach((el, i) => {
+    const isSelected = i < sel;
+    el.classList.toggle('selected', isSelected);
+    if (isSelected) el.classList.remove('needed-hint');
+  });
+
+  // Update count display with color + pop animation
+  const countEl = document.querySelector(`[data-count="${pizzaIdx}"]`);
+  if (countEl) {
+    countEl.innerHTML = frac(sel > 0 ? sel : '&nbsp;', denom);
+    countEl.classList.remove('count-correct', 'count-over', 'count-partial', 'count-pop');
+    void countEl.offsetWidth; // reflow to restart animation
+    if (sel > 0) {
+      countEl.classList.add('count-pop');
+      if (sel === needed) countEl.classList.add('count-correct');
+      else if (sel > needed) countEl.classList.add('count-over');
+      else countEl.classList.add('count-partial');
+    }
+  }
+
+  // Update input field styling and value
+  const input = document.getElementById(`slice-input-${pizzaIdx}`);
+  if (input) {
+    input.classList.toggle('has-value', sel > 0);
+    input.classList.remove('input-correct', 'input-over');
+    if (sel > 0) {
+      if (sel === needed) input.classList.add('input-correct');
+      else if (sel > needed) input.classList.add('input-over');
+    }
+    if (!skipInput && document.activeElement !== input) input.value = sel > 0 ? sel : '';
+  }
+
+  // Update serve count text in customer card (without rerendering button)
+  const card = document.getElementById(`cust-${pizzaIdx}`);
+  if (card) {
+    const selDisp = card.querySelector('.serve-sel-display');
+    if (selDisp) selDisp.innerHTML = `${frac(sel, denom)} <span>조각 선택됨</span>`;
+  }
+
+  // Update numpad active label
+  renderNumpad();
+}
+
+/* ═══════════════════════════════════════════════
+   NUMPAD
+═══════════════════════════════════════════════ */
+function renderNumpad() {
+  const grid = document.getElementById('numpad-grid');
+  const activeLbl = document.getElementById('numpad-active');
+  if (!grid || !activeLbl) return;
+
+  const inServe = G.phase === 'SERVE';
+  const inOrder = G.phase === 'ORDER';
+  const active = inServe || inOrder;
+  const ap = G.activePizzaInput;
+  const apCust = (inServe && ap !== null && ap !== undefined) ? G.customers[ap] : null;
+
+  if (inOrder) {
+    const curVal = document.getElementById('denom-input')?.value || '';
+    activeLbl.innerHTML = `대상: <b>통분 조각 수</b><br><span style="color:#ffe000;font-size:16px;font-weight:700">${curVal || '—'}</span>`;
+  } else if (inServe && apCust && !apCust.served && !apCust.timedOut) {
+    activeLbl.innerHTML = `대상: <b>${apCust.emoji} ${apCust.name}</b><br><span style="color:#fff;display:inline-flex;align-items:center;gap:5px;justify-content:center">${frac(G.selectedSlices[ap], G.chosenDenom)} <span>조각</span></span>`;
+  } else if (inServe) {
+    activeLbl.innerHTML = `대상: <b>선택하세요</b><br><span style="color:#ffffff60;font-size:9px">아래 A/B 버튼 또는 피자/입력칸 클릭</span>`;
+  } else {
+    activeLbl.innerHTML = `<span style="color:#ffffff40">주문/서빙 단계에서 활성화됩니다</span>`;
+  }
+
+  const keys = [
+    ['1','np-btn'],['2','np-btn'],['3','np-btn'],
+    ['4','np-btn'],['5','np-btn'],['6','np-btn'],
+    ['7','np-btn'],['8','np-btn'],['9','np-btn'],
+    ['C','np-btn np-clear'],['0','np-btn'],['⌫','np-btn np-clear'],
+  ];
+
+  let html = '';
+  keys.forEach(([k, cls]) => {
+    html += `<button class="${cls}" ${!active?'disabled':''} onclick="numpadKey('${k}')">${k}</button>`;
+  });
+
+  if (inOrder) {
+    // ORDER 단계: A/B 대신 확인 버튼
+    html += `<button class="np-btn np-target" disabled>—</button>`;
+    html += `<button class="np-btn np-target" disabled>—</button>`;
+    html += `<button class="np-btn np-action" onclick="submitDenom()">↵ 확인</button>`;
+  } else {
+    const c0 = G.customers[0], c1 = G.customers[1];
+    const c0disabled = !inServe || !c0 || c0.served || c0.timedOut;
+    const c1disabled = !inServe || !c1 || c1.served || c1.timedOut;
+    html += `<button class="np-btn np-target ${ap===0?'selected-target':''}" ${c0disabled?'disabled':''} onclick="setActivePizza(0)">A 대상</button>`;
+    html += `<button class="np-btn np-target ${ap===1?'selected-target':''}" ${c1disabled?'disabled':''} onclick="setActivePizza(1)">B 대상</button>`;
+    html += `<button class="np-btn np-action" ${!inServe?'disabled':''} onclick="numpadServe()">↵ 서빙</button>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function numpadKey(k) {
+  if (G.phase === 'ORDER') {
+    const input = document.getElementById('denom-input');
+    if (!input) return;
+    if (k === 'C') {
+      input.value = '';
+    } else if (k === '⌫') {
+      input.value = input.value.slice(0, -1);
+    } else {
+      const digit = parseInt(k);
+      const candidate = parseInt(input.value || '0') * 10 + digit;
+      input.value = candidate <= 200 ? candidate : digit;
+    }
+    input.classList.toggle('has-value', input.value.length > 0);
+    renderNumpad();
+    return;
+  }
+  if (G.phase !== 'SERVE') return;
+  const ap = G.activePizzaInput;
+  if (ap === null || ap === undefined) {
+    showMsg('🔢 먼저 A 또는 B 대상을 선택하세요', 'warning', 1200);
+    return;
+  }
+  const c = G.customers[ap];
+  if (!c || c.served || c.timedOut) return;
+
+  const denom = G.chosenDenom;
+  let cur = G.selectedSlices[ap];
+
+  if (k === 'C') {
+    cur = 0;
+  } else if (k === '⌫') {
+    cur = Math.floor(cur / 10);
+  } else {
+    const digit = parseInt(k);
+    const candidate = cur * 10 + digit;
+    cur = (candidate <= denom) ? candidate : digit;
+    if (cur > denom) cur = denom;
+  }
+  G.selectedSlices[ap] = cur;
+  updateSlicesLightweight(ap);
+}
+
+function numpadServe() {
+  if (G.phase !== 'SERVE') return;
+  const ap = G.activePizzaInput;
+  if (ap === null || ap === undefined) {
+    showMsg('🔢 먼저 A 또는 B 대상을 선택하세요', 'warning', 1200);
+    return;
+  }
+  serveCustomer(ap);
+}
+
+function serveCustomer(idx) {
+  if (G.phase !== 'SERVE') return;
+  const c = G.customers[idx];
+  if (!c || c.served || c.timedOut) return;
+
+  const denom = G.chosenDenom;
+  const needed = Math.round(c.numerator * denom / c.denominator);
+  const selected = G.selectedSlices[idx];
+
+  if (selected === 0) {
+    showMsg('🍕 조각을 먼저 선택하세요!', 'warning');
+    return;
+  }
+
+  const pizzaPrice = 200;
+  const lvlBonus = LEVELS[G.level].bonus;
+
+  G.totalCount++; // 서빙 시도 카운트
+
+  if (selected === needed) {
+    // Perfect!
+    const earned = pizzaPrice + c.tip + lvlBonus;
+    addMoney(earned);
+    G.score += 100 + lvlBonus;
+    c.satisfied = true;
+    G.correctCount++; // 정답 카운트
+    showMsg(`🎉 완벽! +₩${earned} +${100+lvlBonus}점`, 'success');
+    addLog(`✅ ${c.name} 만족! +₩${earned}`, 'success');
+    addPizzaBox();
+  } else if (selected > needed) {
+    // Too many slices
+    const extra = selected - needed;
+    const waste = extra * 25;
+    spendMoney(waste);
+    loseRep(5);
+    c.failed = true;
+    c.failMsg = `😅 재료 낭비! (${extra}조각 초과)`;
+    showMsg(`😅 재료 낭비! -₩${waste} 평판-5%`, 'warning');
+    addLog(`⚠️ ${c.name}: 재료 낭비 -₩${waste}`, 'warning');
+    collapseTower();
+  } else {
+    // Too few slices
+    const missing = needed - selected;
+    loseRep(15);
+    c.failed = true;
+    c.failMsg = `😠 양 부족! (${missing}조각 모자람)`;
+    showMsg(`😠 양이 모자라! 평판 -15%`, 'error');
+    addLog(`❌ ${c.name}: 양 부족 -15%`, 'error');
+    collapseTower();
+  }
+
+  c.served = true;
+  // Auto-switch active pizza to the other unserved customer
+  const other = idx === 0 ? 1 : 0;
+  if (G.customers[other] && !G.customers[other].served && !G.customers[other].timedOut) {
+    G.activePizzaInput = other;
+  }
+  checkLevelUp();
+  if (!checkGameOver()) {
+    render();
+    checkRoundEnd();
+  }
+}
+
+function checkRoundEnd() {
+  const allDone = G.customers.every(c => c.served || c.timedOut);
+  if (allDone) {
+    setPhase('RESULT');
+    if (G.tickTimer) clearInterval(G.tickTimer);
+  }
+}
+
+function nextRound() {
+  newRound();
+}
+
+function skipRound() {
+  loseRep(5);
+  addLog('⏭ 라운드 스킵 -5%', 'warning');
+  showMsg('⏭ 스킵! 평판 -5%', 'warning');
+  if (!checkGameOver()) newRound();
+}
+
+/* ═══════════════════════════════════════════════
+   SHOP
+═══════════════════════════════════════════════ */
+const SHOP_ITEMS = [
+  { id:'toppingBomb', icon:'💣', name:'토핑 폭탄', price:3000, permanent:false,
+    desc:'잘못 잘랐을 때 사용! 분모 선택 단계로 되돌아가 다시 자를 수 있어요. (피자 탑 안전)' },
+  { id:'towerMagnet', icon:'🧲', name:'타워 마그넷', price:2000, permanent:false,
+    desc:'서빙 실패/시간 초과로 피자 탑이 무너지는 것을 1회 자동 방어해요. 미리 사두세요!' },
+  { id:'xrayGoggles', icon:'🥽', name:'X-Ray 고글', price:8000, permanent:false,
+    desc:'1회 사용. 분모 선택 단계에서 활성화하면 가능한 공통분모 후보들이 네온빛 칩으로 반짝여요!' },
+];
+
+function renderShop() {
+  const row = document.getElementById('shop-row');
+  if (!row) return;
+  let html = '';
+  SHOP_ITEMS.forEach(item => {
+    const inv = G.inventory[item.id];
+    const isOwnedPerm = item.permanent && inv;
+    const stock = !item.permanent ? (inv || 0) : 0;
+    const canAfford = G.money >= item.price;
+    const useMode = !item.permanent && stock > 0;
+
+    let cls = 'shop-item';
+    let label = '';
+
+    if (isOwnedPerm) {
+      cls += ' permanent-owned';
+      label = '✓ 보유';
+    } else if (useMode) {
+      cls += ' use-mode';
+      if (item.id === 'toppingBomb' || item.id === 'xrayGoggles') {
+        label = '💥 사용/구매';
+      } else {
+        label = '🛒 추가구매';
+      }
+    } else {
+      if (!canAfford) cls += ' unaffordable';
+      label = `₩${item.price.toLocaleString()}`;
+    }
+
+    const badge = stock > 0 ? `<div class="shop-count">${stock}</div>` : '';
+    html += `<div class="${cls}" onclick="openItemModal('${item.id}')">
+      ${badge}
+      <div class="shop-icon">${item.icon}</div>
+      <div class="shop-name">${item.name}</div>
+      <div class="shop-price">${label}</div>
+    </div>`;
+  });
+  row.innerHTML = html;
+
+  // Tower shield indicator
+  const shieldEl = document.getElementById('tower-shield');
+  if (shieldEl) {
+    shieldEl.style.display = (G.inventory.towerMagnet > 0) ? 'block' : 'none';
+    shieldEl.textContent = `🧲 보호 x${G.inventory.towerMagnet}`;
+  }
+}
+
+function buyItem(itemId, qty) {
+  qty = qty || 1;
+  const item = SHOP_ITEMS.find(it => it.id === itemId);
+  if (!item) return;
+  const total = item.price * qty;
+  if (G.money < total) {
+    showMsg('💸 자금이 부족해요!', 'error', 1500);
+    return;
+  }
+  if (item.permanent && G.inventory[itemId]) {
+    showMsg('이미 보유 중이에요', 'info', 1200);
+    return;
+  }
+  spendMoney(total);
+  if (item.permanent) {
+    G.inventory[itemId] = true;
+  } else {
+    G.inventory[itemId] = (G.inventory[itemId] || 0) + qty;
+  }
+  const qtyStr = (item.permanent || qty === 1) ? '' : ` x${qty}`;
+  showMsg(`🛒 ${item.icon} ${item.name}${qtyStr} 구매 완료!`, 'success', 1500);
+  addLog(`🛒 ${item.name}${qtyStr} 구매 (-₩${total.toLocaleString()})`, 'success');
+  render();
+}
+
+/* ── Item Modal ── */
+let modalState = { itemId: null, qty: 1 };
+
+function openItemModal(itemId) {
+  const item = SHOP_ITEMS.find(it => it.id === itemId);
+  if (!item) return;
+  modalState.itemId = itemId;
+  modalState.qty = 1;
+  renderItemModal();
+  const backdrop = document.getElementById('item-modal-backdrop');
+  // Restart enter animation each open
+  backdrop.classList.remove('active');
+  void backdrop.offsetWidth;
+  backdrop.classList.add('active');
+}
+
+function closeItemModal() {
+  document.getElementById('item-modal-backdrop').classList.remove('active');
+  modalState.itemId = null;
+}
+
+function setModalQty(delta) {
+  const item = SHOP_ITEMS.find(it => it.id === modalState.itemId);
+  if (!item || item.permanent) return;
+  const maxAfford = Math.max(1, Math.floor(G.money / item.price));
+  const newQty = modalState.qty + delta;
+  if (newQty < 1) return;
+  modalState.qty = Math.min(newQty, maxAfford);
+  renderItemModal();
+}
+
+function renderItemModal() {
+  const item = SHOP_ITEMS.find(it => it.id === modalState.itemId);
+  if (!item) return;
+  const modal = document.getElementById('item-modal');
+  const inv = G.inventory[item.id];
+  const isPermOwned = item.permanent && inv;
+  const stock = !item.permanent ? (inv || 0) : 0;
+  const maxAfford = Math.floor(G.money / item.price);
+  const total = item.price * modalState.qty;
+  const canAfford = G.money >= total;
+
+  let useBtn = '';
+  if (stock > 0) {
+    if (item.id === 'toppingBomb') {
+      useBtn = `<button id="item-modal-use" onclick="useFromModal()">💥 보유 폭탄 1개 즉시 사용</button>`;
+    } else if (item.id === 'xrayGoggles') {
+      useBtn = `<button id="item-modal-use" onclick="useFromModal()">🥽 X-Ray 1개 활성화 (현재 분모 선택용)</button>`;
+    }
+  }
+
+  let qtySection = '';
+  if (!isPermOwned && !item.permanent) {
+    const minusDisabled = modalState.qty <= 1;
+    const plusDisabled = modalState.qty >= Math.max(1, maxAfford);
+    qtySection = `
+      <div class="modal-qty-section">
+        <div class="modal-qty-title">📦 구매 수량 선택</div>
+        <div class="modal-qty-row">
+          <button class="modal-qty-btn" onclick="setModalQty(-1)" ${minusDisabled?'disabled':''}>−</button>
+          <div class="modal-qty-value">${modalState.qty}</div>
+          <button class="modal-qty-btn" onclick="setModalQty(1)" ${plusDisabled?'disabled':''}>+</button>
+        </div>
+        <div class="modal-qty-info">
+          <span>단가: ₩${item.price.toLocaleString()}</span>
+          <span class="modal-qty-total">합계: <b>₩${total.toLocaleString()}</b></span>
+        </div>
+      </div>`;
+  } else if (item.permanent && !isPermOwned) {
+    qtySection = `
+      <div class="modal-qty-section">
+        <div class="modal-qty-title">💎 영구 적용 아이템</div>
+        <div class="modal-qty-info" style="justify-content:center">
+          <span class="modal-qty-total"><b>₩${item.price.toLocaleString()}</b></span>
+        </div>
+      </div>`;
+  }
+
+  let actions;
+  if (isPermOwned) {
+    actions = `
+      <div style="text-align:center;color:#00ff88;font-size:14px;padding:8px;margin-bottom:14px;background:rgba(0,255,136,.08);border-radius:8px;border:1px solid #00ff8830">
+        ✓ 이미 보유 중입니다
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeItemModal()">닫기</button>
+      </div>`;
+  } else {
+    actions = `
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeItemModal()">취소</button>
+        <button class="btn-buy" onclick="confirmPurchase()" ${!canAfford?'disabled':''}>${canAfford?`🛒 ${item.permanent?'구매':modalState.qty+'개 구매'}`:'💸 자금 부족'}</button>
+      </div>`;
+  }
+
+  modal.innerHTML = `
+    <div id="item-modal-header">
+      <div id="item-modal-icon">${item.icon}</div>
+      <div id="item-modal-titles">
+        <div id="item-modal-name">${item.name}</div>
+        ${stock > 0 ? `<div id="item-modal-stock">📦 현재 보유: ${stock}개</div>` : ''}
+        ${isPermOwned ? `<div id="item-modal-stock">✓ 영구 보유 중</div>` : ''}
+      </div>
+    </div>
+    <div id="item-modal-desc">${item.desc}</div>
+    ${useBtn}
+    ${qtySection}
+    ${actions}
+  `;
+}
+
+function confirmPurchase() {
+  const item = SHOP_ITEMS.find(it => it.id === modalState.itemId);
+  if (!item) return;
+  const qty = item.permanent ? 1 : modalState.qty;
+  buyItem(item.id, qty);
+  closeItemModal();
+}
+
+function useFromModal() {
+  const itemId = modalState.itemId;
+  closeItemModal();
+  if (itemId === 'toppingBomb') useToppingBomb();
+  else if (itemId === 'xrayGoggles') useXrayGoggles();
+}
+
+function useXrayGoggles() {
+  if (G.inventory.xrayGoggles <= 0) return;
+  if (G.phase !== 'ORDER') {
+    showMsg('🥽 분모 선택 단계에서만 사용 가능해요', 'warning', 1500);
+    return;
+  }
+  if (G.xrayActive) {
+    showMsg('🥽 이미 활성화되어 있어요', 'info', 1200);
+    return;
+  }
+  G.inventory.xrayGoggles--;
+  G.xrayActive = true;
+  showMsg('🥽 X-Ray 활성화! 추천 분모를 확인하세요', 'success', 2000);
+  addLog('🥽 X-Ray 활성화 - 1회 사용', 'info');
+  render();
+}
+
+function useToppingBomb() {
+  if (G.inventory.toppingBomb <= 0) return;
+  if (G.phase !== 'SERVE' && G.phase !== 'CUT') {
+    showMsg('💣 서빙 단계에서만 사용할 수 있어요', 'warning', 1500);
+    return;
+  }
+  const hasUnserved = G.customers.some(c => !c.served && !c.timedOut);
+  if (!hasUnserved) {
+    showMsg('💣 모든 손님이 이미 처리됐어요', 'warning', 1500);
+    return;
+  }
+  G.inventory.toppingBomb--;
+  G.chosenDenom = null;
+  G.selectedSlices = [0, 0];
+  setPhase('ORDER');
+  showMsg('💣 토핑 폭탄! 다시 자를 수 있어요', 'success', 2000);
+  addLog('💣 토핑 폭탄 사용 - 재커팅 가능', 'info');
+}
+
+function pickXrayChip(d) {
+  const input = document.getElementById('denom-input');
+  if (input) {
+    input.value = d;
+    input.classList.add('has-value');
+  }
+  submitDenom();
+}
+
+/* ═══════════════════════════════════════════════
+   PIZZA BOX TOWER & FEVER
+═══════════════════════════════════════════════ */
+const MAX_BOXES = 8;
+const FEVER_SECS = 10;
+
+function addPizzaBox() {
+  if (G.feverActive) return;
+  G.boxStack++;
+  if (G.boxStack > G.maxCombo) G.maxCombo = G.boxStack; // 최대 콤보 갱신
+  renderBoxTower(true);
+  showComboPopup(G.boxStack);
+  if (G.boxStack >= MAX_BOXES) triggerFever();
+}
+
+function showComboPopup(count) {
+  const el = document.getElementById('combo-popup');
+  if (!el) return;
+  el.textContent = `BOX TOWER COMBO ${count}!`;
+  el.classList.remove('combo-burst');
+  void el.offsetWidth; // force reflow to restart animation
+  el.classList.add('combo-burst');
+}
+
+function renderBoxTower(animateLast) {
+  const tower = document.getElementById('box-tower');
+  const lbl   = document.getElementById('tower-label');
+  if (!tower) return;
+  tower.innerHTML = '';
+  for (let i = 0; i < G.boxStack; i++) {
+    const box = document.createElement('div');
+    box.className = 'pbox' + (G.feverActive ? ' fever-glow' : '');
+    box.textContent = '🍕';
+    if (!animateLast || i < G.boxStack - 1) {
+      box.style.animation = 'none';
+    }
+    tower.appendChild(box);
+  }
+  if (lbl) {
+    if (G.feverActive) {
+      lbl.textContent = '🔥 FEVER!';
+      lbl.style.color = '#ffe000';
+    } else {
+      lbl.textContent = `🍕 ${G.boxStack}/${MAX_BOXES}`;
+      lbl.style.color = G.boxStack >= MAX_BOXES * 0.75 ? '#ff8800cc' : '#ffe00066';
+    }
+  }
+}
+
+function triggerFever() {
+  if (G.feverActive) return;
+  G.feverActive = true;
+
+  // Screen flash
+  const flash = document.createElement('div');
+  flash.style.cssText = 'position:fixed;inset:0;z-index:400;pointer-events:none;' +
+    'background:rgba(255,220,0,.32);animation:banner-appear .25s ease both;';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 350);
+
+  // Re-render tower boxes as glowing
+  renderBoxTower(false);
+
+  // Show fever overlay (re-trigger animations)
+  const ov = document.getElementById('fever-overlay');
+  if (ov) {
+    ov.style.display = 'block';
+    ['fever-banner','fever-sub'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.style.animation='none'; el.offsetWidth; el.style.animation=''; }
+    });
+  }
+
+  showMsg('🔥 FEVER TIME! 10초 유지비 면제!', 'success', 2500);
+  addLog('🔥 피버 타임 발동! 유지비 정지', 'success');
+
+  // Spaceship parade
+  G.shipInterval = setInterval(spawnFeverShip, 1200);
+  for (let i = 0; i < 4; i++) setTimeout(spawnFeverShip, i * 300);
+
+  // Fever countdown
+  G.feverTimeLeft = FEVER_SECS;
+  if (G.feverTimer) clearInterval(G.feverTimer);
+  G.feverTimer = setInterval(() => {
+    G.feverTimeLeft -= 0.1;
+    const bar = document.getElementById('fever-bar-inner');
+    if (bar) bar.style.width = Math.max(0, G.feverTimeLeft / FEVER_SECS * 100) + '%';
+    if (G.feverTimeLeft <= 0) endFever();
+  }, 100);
+}
+
+function endFever() {
+  G.feverActive = false;
+  G.boxStack = 0;
+  if (G.feverTimer)  { clearInterval(G.feverTimer);  G.feverTimer  = null; }
+  if (G.shipInterval){ clearInterval(G.shipInterval); G.shipInterval= null; }
+  document.querySelectorAll('.fship').forEach(el => el.remove());
+  const ov = document.getElementById('fever-overlay');
+  if (ov) ov.style.display = 'none';
+  renderBoxTower(false);
+  showMsg('✨ 피버 종료! 다시 도전해봐요!', 'info', 2000);
+  addLog('✨ 피버 타임 종료', 'info');
+}
+
+function collapseTower() {
+  if (G.boxStack === 0 || G.feverActive) return;
+  // Tower Magnet auto-protect
+  if (G.inventory && G.inventory.towerMagnet > 0) {
+    G.inventory.towerMagnet--;
+    showMsg('🧲 타워 마그넷이 탑을 지켜냈어요!', 'success', 2000);
+    addLog('🧲 타워 마그넷 발동! 탑 보호', 'success');
+    // Brief green flash on existing boxes
+    document.querySelectorAll('#box-tower .pbox').forEach(b => {
+      const prev = b.style.boxShadow;
+      b.style.boxShadow = '0 0 20px #00ff88, 0 0 40px #00ff88';
+      setTimeout(() => { b.style.boxShadow = prev; }, 900);
+    });
+    renderShop();
+    return;
+  }
+  const tower = document.getElementById('box-tower');
+  if (!tower || tower.children.length === 0) { G.boxStack = 0; return; }
+
+  // Detach boxes into a ghost div for falling animation
+  const ghost = document.createElement('div');
+  ghost.style.cssText = 'position:fixed;right:8px;bottom:50px;width:66px;' +
+    'display:flex;flex-direction:column-reverse;gap:3px;z-index:198;' +
+    'pointer-events:none;align-items:center;';
+  ghost.innerHTML = tower.innerHTML;
+  document.body.appendChild(ghost);
+
+  const ghostBoxes = [...ghost.children];
+  ghostBoxes.forEach((box, i) => {
+    setTimeout(() => {
+      box.style.animation = 'none';
+      box.offsetWidth;
+      box.classList.add('falling');
+    }, i * 55);
+  });
+  setTimeout(() => ghost.remove(), ghostBoxes.length * 55 + 600);
+
+  // Reset real tower immediately
+  G.boxStack = 0;
+  renderBoxTower(false);
+}
+
+function spawnFeverShip() {
+  const pool = ['🚀','🛸','🚀','⭐','🛸','🌟','💫','🚀','🛸'];
+  const el = document.createElement('div');
+  el.className = 'fship';
+  const size = 22 + Math.random() * 20;
+  const top  = 5  + Math.random() * 78;
+  const dur  = 2.0 + Math.random() * 2.5;
+  const flip = Math.random() > 0.8;
+  el.textContent = pool[Math.floor(Math.random() * pool.length)];
+  el.style.cssText = `position:fixed;left:-100px;top:${top}%;font-size:${size}px;` +
+    `z-index:349;pointer-events:none;` +
+    `${flip ? 'transform:scaleX(-1);' : ''}` +
+    `animation:ship-fly ${dur}s linear forwards;`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), (dur + 0.5) * 1000);
+}
+
+/* ═══════════════════════════════════════════════
+   STOP ALL
+═══════════════════════════════════════════════ */
+function stopAll() {
+  if (G.tickTimer) clearInterval(G.tickTimer);
+  if (G.maintTimer) clearInterval(G.maintTimer);
+  if (G.feverTimer) { clearInterval(G.feverTimer); G.feverTimer = null; }
+  if (G.shipInterval) { clearInterval(G.shipInterval); G.shipInterval = null; }
+  document.querySelectorAll('.fship').forEach(el => el.remove());
+  const ov = document.getElementById('fever-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════
+   GAME OVER SCREEN
+═══════════════════════════════════════════════ */
+
+// ▶ Apps Script 배포 URL을 여기에 붙여넣으세요
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9c7ZAdNTiiR7RLdru1mpr5_bWZ8MefFC0CzyapnK_K6WjeDi2BNpWU8oVDEbkGZvVnw/exec';
+
+function calcEduGradeClient(accuracy, round, maxCombo) {
+  const weighted = accuracy * 0.6 + Math.min(round * 2, 20) + Math.min(maxCombo * 1.5, 15);
+  if (weighted >= 80) return { key: 'S', label: '🌟 S — 수학 천재',   desc: '완벽한 분수 실력! 은하계 최고예요!' };
+  if (weighted >= 65) return { key: 'A', label: '🚀 A — 우주 마스터', desc: '훌륭해요! 조금만 더 하면 천재!' };
+  if (weighted >= 50) return { key: 'B', label: '🍕 B — 피자 영웅',   desc: '좋은 실력이에요! 연습하면 더 오를 거예요.' };
+  if (weighted >= 35) return { key: 'C', label: '📚 C — 열심히 노력중', desc: '포기하지 마세요! 통분 개념을 복습해봐요.' };
+  return                      { key: 'D', label: '💪 D — 도전을 계속하자', desc: '분수의 분모를 잘 살펴보세요. 할 수 있어요!' };
+}
+
+function showGameOver(title, sub, emoji) {
+  stopAll();
+  G.phase = 'IDLE';
+
+  const accuracy = G.totalCount > 0 ? Math.round(G.correctCount / G.totalCount * 100) : 0;
+  const grade    = calcEduGradeClient(accuracy, G.roundCount, G.maxCombo);
+
+  // 기본 텍스트
+  document.getElementById('go-title').textContent = title;
+  document.getElementById('go-sub').innerHTML = `${sub}<br><span style="font-size:13px;color:#aaa">${grade.desc}</span>`;
+  document.getElementById('go-emoji').textContent = emoji;
+
+  // 교육 등급 배지
+  const badge = document.getElementById('go-edu-badge');
+  badge.textContent = grade.label;
+  badge.className = `grade-${grade.key}`;
+
+  // 스탯 카드
+  document.getElementById('go-score-val').textContent   = G.score.toLocaleString();
+  document.getElementById('go-round-val').textContent   = G.roundCount;
+  document.getElementById('go-combo-val').textContent   = G.maxCombo;
+  document.getElementById('go-correct-val').textContent = G.correctCount;
+  document.getElementById('go-total-val').textContent   = G.totalCount;
+  document.getElementById('go-acc-val').textContent     = accuracy + '%';
+
+  // 정답률에 따라 배경색 변화
+  const accCard = document.querySelector('.go-scard.s-acc');
+  if (accCard) {
+    accCard.style.background =
+      accuracy >= 80 ? 'rgba(0,255,136,.1)'  :
+      accuracy >= 60 ? 'rgba(255,224,0,.08)' :
+                       'rgba(255,68,68,.08)';
+  }
+
+  // 제출 버튼/메시지 초기화
+  document.getElementById('go-submit-btn').disabled = false;
+  document.getElementById('go-submit-msg').textContent = '';
+  document.getElementById('go-submit-msg').className  = '';
+  document.getElementById('go-ranking-table').innerHTML = '';
+  document.getElementById('go-ranking-btn').style.display = 'block';
+  document.getElementById('go-nickname').value = '';
+
+  document.getElementById('gameover-screen').style.display = 'flex';
+}
+
+/* ─── 랭킹 등록 ─── */
+/* ─── 개인정보 탐지 ─── */
+const PRIVACY_RULES = [
+  {
+    label: '📱 <b>전화번호</b>처럼 보이는 숫자가 포함되어 있어요.',
+    pattern: /(01[016789])[-\s.]?(\d{3,4})[-\s.]?(\d{4})|\d{2,4}[-\s.]\d{3,4}[-\s.]\d{4}/,
+  },
+  {
+    label: '📧 <b>이메일 주소</b>가 포함된 것 같아요.',
+    pattern: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/,
+  },
+  {
+    label: '🏫 <b>학교 이름</b>이 포함된 것 같아요.',
+    pattern: /초등학교|중학교|고등학교|대학교|초등|중학|고등|대학|학원|스쿨|school/i,
+  },
+  {
+    label: '🔢 <b>주민번호·학번</b>처럼 보이는 숫자 6자리 이상이 포함되어 있어요.',
+    pattern: /\d{6,}/,
+  },
+  {
+    label: '👤 실제 <b>이름</b>처럼 보이는 글자가 포함되어 있어요. (2~4자 한글만 입력된 경우)',
+    // 한글 2~4자 단독 (+ 선택적으로 공백 + 숫자 없음) → 실명 가능성
+    test: (nick) => /^[가-힣]{2,4}$/.test(nick),
+  },
+];
+
+function detectPrivacy(nickname) {
+  const found = [];
+  for (const rule of PRIVACY_RULES) {
+    if (rule.pattern && rule.pattern.test(nickname)) found.push(rule.label);
+    else if (rule.test && rule.test(nickname))       found.push(rule.label);
+  }
+  return found;
+}
+
+/* ─── 개인정보 모달 제어 ─── */
+let _privacyProceedCallback = null;
+
+function openPrivacyModal(issues, onProceed) {
+  _privacyProceedCallback = onProceed;
+  const nickname = document.getElementById('go-nickname').value.trim();
+
+  if (issues.length > 0) {
+    // 개인정보 감지된 경우
+    document.getElementById('privacy-icon').textContent  = '🔒';
+    document.getElementById('privacy-title').textContent = '개인정보가 포함된 것 같아요!';
+    document.getElementById('privacy-body').innerHTML    =
+      `닉네임 <b style="color:#ff9999">"${escHtml(nickname)}"</b>에<br>개인정보가 포함되면 다른 사람에게 노출될 수 있어요.`;
+    document.getElementById('privacy-detected').innerHTML =
+      issues.map(i => `• ${i}`).join('<br>');
+    document.getElementById('privacy-detected').style.display = 'block';
+    document.getElementById('privacy-re-enter').textContent   = '✏️ 다시 입력하기';
+    document.getElementById('privacy-confirm').textContent    = '그냥 등록할게요';
+  } else {
+    // 이상 없음 — 닉네임 최종 확인
+    document.getElementById('privacy-icon').textContent  = '✅';
+    document.getElementById('privacy-title').textContent = '이 닉네임으로 등록할까요?';
+    document.getElementById('privacy-body').innerHTML    =
+      `닉네임: <b style="color:#ffe000;font-size:18px">"${escHtml(nickname)}"</b><br>
+      <span style="font-size:12px;color:#aaa">이름·학교·전화번호 등 개인정보가 포함되어 있지 않은지<br>한 번 더 확인해주세요!</span>`;
+    document.getElementById('privacy-detected').style.display = 'none';
+    document.getElementById('privacy-re-enter').textContent   = '✏️ 수정하기';
+    document.getElementById('privacy-confirm').textContent    = '🚀 등록!';
+  }
+
+  const bd = document.getElementById('privacy-backdrop');
+  bd.classList.remove('active');
+  void bd.offsetWidth;
+  bd.classList.add('active');
+}
+function closePrivacyModal() {
+  document.getElementById('privacy-backdrop').classList.remove('active');
+  _privacyProceedCallback = null;
+}
+function privacyReEnter() {
+  closePrivacyModal();
+  document.getElementById('go-nickname').focus();
+  document.getElementById('go-nickname').select();
+}
+function privacyProceed() {
+  closePrivacyModal();
+  if (_privacyProceedCallback) _privacyProceedCallback();
+}
+
+/* ─── 랭킹 등록 (개인정보 체크 포함) ─── */
+function submitRanking() {
+  const nickname = document.getElementById('go-nickname').value.trim();
+  if (!nickname) {
+    const msg = document.getElementById('go-submit-msg');
+    msg.textContent = '⚠️ 닉네임을 입력해주세요!';
+    msg.className = 'err';
+    return;
+  }
+  if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+    const msg = document.getElementById('go-submit-msg');
+    msg.textContent = '⚠️ APPS_SCRIPT_URL이 설정되지 않았어요.';
+    msg.className = 'err';
+    return;
+  }
+
+  // 개인정보 탐지 여부와 관계없이 항상 확인 모달 표시
+  const issues = detectPrivacy(nickname);
+  openPrivacyModal(issues, () => _doSubmitRanking(nickname));
+}
+
+async function _doSubmitRanking(nickname) {
+  const btn = document.getElementById('go-submit-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 등록 중...';
+
+  const accuracy = G.totalCount > 0 ? Math.round(G.correctCount / G.totalCount * 100) : 0;
+  const payload  = {
+    nickname,
+    score:    G.score,
+    round:    G.roundCount,
+    maxCombo: G.maxCombo,
+    correct:  G.correctCount,
+    total:    G.totalCount,
+    accuracy,
+    level:    G.level + 1,
+    money:    G.money,
+  };
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body:   JSON.stringify(payload),
+    });
+    const json = await res.json();
+    const msg  = document.getElementById('go-submit-msg');
+    if (json.success) {
+      msg.textContent = `✅ 랭킹 등록 완료! 등급: ${json.grade}`;
+      msg.className   = 'ok';
+      btn.textContent = '✅ 등록됨';
+      setTimeout(loadAndShowRanking, 800);
+    } else {
+      throw new Error(json.error || '서버 오류');
+    }
+  } catch (err) {
+    const msg = document.getElementById('go-submit-msg');
+    msg.textContent = `❌ 등록 실패: ${err.message}`;
+    msg.className   = 'err';
+    btn.disabled    = false;
+    btn.textContent = '🏆 랭킹 등록';
+  }
+}
+
+/* ─── 랭킹 조회 + 표시 ─── */
+async function loadAndShowRanking() {
+  const tableDiv = document.getElementById('go-ranking-table');
+  const btn      = document.getElementById('go-ranking-btn');
+  btn.style.display = 'none';
+
+  if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+    tableDiv.innerHTML = '<div id="go-ranking-loading" style="color:#ff8800">⚠️ APPS_SCRIPT_URL을 먼저 설정하세요.</div>';
+    return;
+  }
+
+  tableDiv.innerHTML = '<div id="go-ranking-loading">🛸 랭킹 불러오는 중...</div>';
+
+  try {
+    const nickname = document.getElementById('go-nickname').value.trim();
+    const res  = await fetch(`${APPS_SCRIPT_URL}?mode=top&limit=20`);
+    const json = await res.json();
+
+    if (!json.success) throw new Error(json.error || '조회 실패');
+
+    const rows    = json.rankings || [];
+    const medals  = ['🥇', '🥈', '🥉'];
+
+    let html = `<table class="rank-table">
+      <thead><tr>
+        <th>순위</th><th>닉네임</th><th>📊 정답률</th>
+        <th>🏆 점수</th><th>🔥 콤보</th><th>📦 라운드</th><th>등급</th>
+      </tr></thead><tbody>`;
+
+    if (rows.length === 0) {
+      html += `<tr><td colspan="7" style="color:#aaa;padding:16px">아직 랭킹이 없어요. 첫 번째 주인공이 되세요!</td></tr>`;
+    } else {
+      rows.forEach((r, i) => {
+        const rank      = i + 1;
+        const medal     = medals[i] || rank;
+        const gradeKey  = (r.grade || 'D').charAt(0);
+        const isMe      = nickname && r.nickname === nickname;
+        const rowClass  = isMe ? 'rank-row-me' : '';
+        html += `<tr class="${rowClass}">
+          <td class="rank-medal">${medal}</td>
+          <td style="font-weight:700">${escHtml(r.nickname)}${isMe ? ' 👈' : ''}</td>
+          <td style="font-size:14px;font-weight:800;color:${r.accuracy>=80?'#00ff88':r.accuracy>=60?'#ffe000':'#ff8800'}">${r.accuracy}%</td>
+          <td>${Number(r.score).toLocaleString()}</td>
+          <td>${r.maxCombo}</td>
+          <td>${r.round}</td>
+          <td class="rank-grade-${gradeKey}">${gradeKey}</td>
+        </tr>`;
+      });
+    }
+    html += '</tbody></table>';
+    tableDiv.innerHTML = html;
+
+  } catch (err) {
+    tableDiv.innerHTML = `<div id="go-ranking-loading" style="color:#ff4444">❌ 랭킹 로드 실패: ${err.message}</div>`;
+    btn.style.display = 'block';
+  }
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ═══════════════════════════════════════════════
+   START / RESTART
+═══════════════════════════════════════════════ */
+function startGame() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+  G = freshState();
+  G.money = 1000;
+  G.reputation = 100;
+  G.score = 0;
+  G.level = 0;
+  G.roundCount = 0;
+  renderBoxTower(false);
+  startMaintTimer();
+  newRound();
+}
+
+/* ═══════════════════════════════════════════════
+   GUIDE MODAL
+═══════════════════════════════════════════════ */
+function openGuide() {
+  const bd = document.getElementById('guide-backdrop');
+  bd.classList.remove('active');
+  void bd.offsetWidth;
+  bd.classList.add('active');
+}
+function closeGuide() {
+  document.getElementById('guide-backdrop').classList.remove('active');
+}
+
+/* ═══════════════════════════════════════════════
+   RANKING MODAL (언제든 열람 가능)
+═══════════════════════════════════════════════ */
+let _rankTab = 'top';
+
+const RANK_TAB_META = {
+  top:      { label: '교육 종합 점수 기준 (정답률 60% · 점수 25% · 콤보 15%)', col: -1 },
+  accuracy: { label: '정답률 높은 순 — 정확하게 풀수록 유리해요!',             col: 2 },
+  score:    { label: '점수 높은 순',                                             col: 3 },
+  combo:    { label: '최대 콤보 높은 순 — 연속 성공 집중력 순위!',              col: 4 },
+  round:    { label: '라운드 많은 순 — 오래 살아남을수록 유리해요!',            col: 5 },
+  grade:    { label: '등급 높은 순 (S > A > B > C > D)',                        col: 6 },
+  recent:   { label: '최근 등록 순',                                             col: -1 },
+};
+
+function openRankingModal() {
+  const bd = document.getElementById('rank-modal-backdrop');
+  bd.classList.remove('active');
+  void bd.offsetWidth;
+  bd.classList.add('active');
+  fetchAndRenderRankModal(_rankTab);
+}
+function closeRankingModal() {
+  document.getElementById('rank-modal-backdrop').classList.remove('active');
+}
+function switchRankTab(sort) {
+  _rankTab = sort;
+  document.querySelectorAll('.rank-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.sort === sort);
+  });
+  const meta = RANK_TAB_META[sort] || RANK_TAB_META.top;
+  document.getElementById('rank-modal-sub').textContent = meta.label;
+  fetchAndRenderRankModal(sort);
+}
+
+async function fetchAndRenderRankModal(sort) {
+  const wrap = document.getElementById('rank-modal-table-wrap');
+  wrap.innerHTML = '<div id="rank-modal-loading">🛸 랭킹을 불러오는 중...</div>';
+
+  if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+    wrap.innerHTML = '<div id="rank-modal-loading" style="color:#ff8800">⚠️ APPS_SCRIPT_URL을 먼저 설정하세요.<br>Code.gs 배포 후 URL을 index.html에 입력해주세요.</div>';
+    return;
+  }
+
+  try {
+    const limit = sort === 'recent' ? 10 : 20;
+    const res   = await fetch(`${APPS_SCRIPT_URL}?sort=${sort}&limit=${limit}`);
+    const json  = await res.json();
+    if (!json.success) throw new Error(json.error || '조회 실패');
+
+    const rows      = json.rankings || [];
+    const medals    = ['🥇','🥈','🥉'];
+    const highlightCol = (RANK_TAB_META[sort] || {}).col ?? -1;
+
+    // 열 인덱스: 0=순위 1=닉 2=정답률 3=점수 4=콤보 5=라운드 6=등급 7=날짜
+    const thStyle = (col) => col === highlightCol
+      ? 'background:rgba(255,224,0,.18);color:#ffe000'
+      : '';
+    const tdCls   = (col) => col === highlightCol ? 'rank-col-highlight' : '';
+
+    let html = `<table class="rank-table">
+      <thead><tr>
+        <th>순위</th>
+        <th>닉네임</th>
+        <th style="${thStyle(2)}">📊 정답률</th>
+        <th style="${thStyle(3)}">🏆 점수</th>
+        <th style="${thStyle(4)}">🔥 콤보</th>
+        <th style="${thStyle(5)}">📦 라운드</th>
+        <th style="${thStyle(6)}">🎓 등급</th>
+        <th>날짜</th>
+      </tr></thead><tbody>`;
+
+    if (rows.length === 0) {
+      html += `<tr><td colspan="8" style="color:#aaa;padding:20px">아직 등록된 랭킹이 없어요!<br>게임 오버 후 첫 번째 주인공이 되어보세요 🚀</td></tr>`;
+    } else {
+      rows.forEach((r, i) => {
+        const medal    = medals[i] || (i + 1);
+        const gradeKey = (r.grade || 'D').charAt(0);
+        const accColor = r.accuracy >= 80 ? '#00ff88' : r.accuracy >= 60 ? '#ffe000' : '#ff8800';
+        const dateStr  = r.date ? String(r.date).slice(0, 10) : '-';
+        html += `<tr>
+          <td class="rank-medal">${medal}</td>
+          <td style="font-weight:700">${escHtml(r.nickname)}</td>
+          <td class="${tdCls(2)}" style="color:${accColor};font-weight:800">${r.accuracy}%</td>
+          <td class="${tdCls(3)}">${Number(r.score).toLocaleString()}</td>
+          <td class="${tdCls(4)}">${r.maxCombo}</td>
+          <td class="${tdCls(5)}">${r.round}</td>
+          <td class="rank-grade-${gradeKey} ${tdCls(6)}">${gradeKey}</td>
+          <td style="color:#555;font-size:11px">${dateStr}</td>
+        </tr>`;
+      });
+    }
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+
+  } catch (err) {
+    wrap.innerHTML = `<div id="rank-modal-loading" style="color:#ff4444">❌ 랭킹 로드 실패: ${err.message}</div>`;
+  }
+}
+// Auto-open on first visit
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(openGuide, 600);
+});
+
+function restartGame() {
+  document.getElementById('gameover-screen').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+  stopAll();
+  G = freshState();
+  G.money = 1000;
+  G.reputation = 100;
+  G.score = 0;
+  G.level = 0;
+  G.roundCount = 0;
+  // Clear log
+  const log = document.getElementById('info-log');
+  while (log.children.length > 1) log.removeChild(log.lastChild);
+  renderBoxTower(false);
+  startMaintTimer();
+  newRound();
+}
+</script>
+</body>
+</html>
