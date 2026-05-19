@@ -1029,6 +1029,56 @@ body{
   100% { transform:scale(1)   translateY(-120px); opacity:0 }
 }
 
+/* ── 이어하기 모달 ── */
+#resume-backdrop{
+  position:fixed;inset:0;z-index:800;
+  background:rgba(0,0,0,.78);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+#resume-backdrop.active{display:flex;animation:modal-fade-in .2s ease}
+#resume-modal{
+  background:linear-gradient(160deg,#0d0d2b,#1a0d2e);
+  border:2px solid #00ff8860;border-radius:20px;
+  max-width:420px;width:100%;padding:28px 24px;
+  position:relative;text-align:center;
+  box-shadow:0 0 60px #00ff8830,0 0 120px #ff44ff20;
+}
+#resume-backdrop.active #resume-modal{animation:modal-pop-in .38s cubic-bezier(.34,1.56,.64,1)}
+#resume-icon{font-size:48px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 12px #00ff88)}
+#resume-title{
+  font-size:18px;font-weight:900;letter-spacing:1.5px;
+  background:linear-gradient(135deg,#00ff88,#00ffff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:4px;
+}
+#resume-sub{font-size:12px;color:#aaa;margin-bottom:16px}
+#resume-info{
+  background:rgba(255,255,255,.04);border:1px solid #ffffff15;
+  border-radius:12px;padding:10px 14px;margin-bottom:18px;text-align:left;
+  display:flex;flex-direction:column;gap:6px;
+}
+.resume-row{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:13px;color:#ddd;
+}
+.resume-row span{color:#aaa;font-size:12px}
+.resume-row b{color:#ffe000;font-size:13px;font-weight:700}
+.resume-actions{display:flex;gap:10px}
+.resume-actions button{
+  flex:1;padding:11px;border-radius:10px;border:none;
+  font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;
+  transition:transform .15s,box-shadow .15s;
+}
+.resume-actions button:hover{transform:translateY(-2px)}
+#resume-continue{
+  background:linear-gradient(135deg,#00ff88,#0088ff);color:#001a0d;
+  box-shadow:0 0 18px #00ff8850;
+}
+#resume-discard{
+  background:rgba(255,255,255,.06);color:#aaa;
+  border:1.5px solid #ffffff25!important;
+}
+
 /* ── 워터마크 (하단 가운데) ── */
 #watermark{
   position:fixed;bottom:6px;left:50%;transform:translateX(-50%);
@@ -1551,7 +1601,21 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00015</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00016</div>
+
+<!-- 이어하기 모달 -->
+<div id="resume-backdrop">
+  <div id="resume-modal">
+    <div id="resume-icon">🎮</div>
+    <div id="resume-title">진행 중이던 게임이 있어요!</div>
+    <div id="resume-sub">이어서 플레이하시겠어요?</div>
+    <div id="resume-info"></div>
+    <div class="resume-actions">
+      <button id="resume-discard" onclick="discardSaveAndStart()">🆕 처음부터</button>
+      <button id="resume-continue" onclick="resumeGame()">▶ 이어하기</button>
+    </div>
+  </div>
+</div>
 
 <!-- PIZZA BOX TOWER -->
 <div id="box-tower"></div>
@@ -2326,9 +2390,11 @@ function checkLevelUp() {
 /* ═══════════════════════════════════════════════
    MAINTENANCE TIMER
 ═══════════════════════════════════════════════ */
-function startMaintTimer() {
+function startMaintTimer(keepRemaining) {
   if (G.maintTimer) clearInterval(G.maintTimer);
-  G.maintTimeLeft = LEVELS[G.level].maintInterval;
+  if (!keepRemaining || !G.maintTimeLeft || G.maintTimeLeft <= 0) {
+    G.maintTimeLeft = LEVELS[G.level].maintInterval;
+  }
   G.maintTimer = setInterval(() => {
     G.maintTimeLeft -= .5;
     if (G.maintTimeLeft <= 0) {
@@ -2422,6 +2488,7 @@ function createCustomer() {
 function setPhase(phase) {
   G.phase = phase;
   render();
+  saveGameState();
 }
 
 function newRound() {
@@ -3191,6 +3258,7 @@ function calcEduGradeClient(accuracy, round, maxCombo) {
 function showGameOver(title, sub, emoji) {
   stopAll();
   G.phase = 'IDLE';
+  clearSavedGame(); // 게임오버 시 저장 데이터 삭제
 
   const accuracy = G.totalCount > 0 ? Math.round(G.correctCount / G.totalCount * 100) : 0;
   const grade    = calcEduGradeClient(accuracy, G.roundCount, G.maxCombo);
@@ -3446,6 +3514,16 @@ function escHtml(str) {
    START / RESTART
 ═══════════════════════════════════════════════ */
 function startGame() {
+  // 이어할 수 있는 저장 데이터가 있다면 이어하기 모달 표시
+  if (hasResumableGame()) {
+    openResumeModal();
+    return;
+  }
+  startNewGame();
+}
+
+function startNewGame() {
+  clearSavedGame();
   document.getElementById('start-screen').style.display = 'none';
   document.getElementById('game').style.display = 'flex';
   G = freshState();
@@ -3457,7 +3535,148 @@ function startGame() {
   renderBoxTower(false);
   startMaintTimer();
   newRound();
+  saveGameState();
 }
+
+/* ═══════════════════════════════════════════════
+   SAVE / RESUME — 게임 중단 시 이어하기
+═══════════════════════════════════════════════ */
+const SAVE_KEY = 'cosmicPizza_saveState_v1';
+const SAVE_VERSION = 1;
+const SAVE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7일
+
+function saveGameState() {
+  // IDLE/RESULT 게임 오버 등은 저장 안 함
+  if (!G || G.phase === 'IDLE') return;
+  if (G.reputation <= 0 || G.money < 0) return;
+
+  try {
+    const snapshot = {
+      version: SAVE_VERSION,
+      savedAt: Date.now(),
+      money: G.money,
+      reputation: G.reputation,
+      score: G.score,
+      level: G.level,
+      phase: G.phase,
+      roundCount: G.roundCount,
+      chosenDenom: G.chosenDenom,
+      selectedSlices: [...G.selectedSlices],
+      activePizzaInput: G.activePizzaInput,
+      customers: G.customers.map(c => ({
+        name: c.name, emoji: c.emoji, numerator: c.numerator, denominator: c.denominator,
+        waitTimeLeft: c.waitTimeLeft, maxWaitTime: c.maxWaitTime,
+        served: c.served, satisfied: c.satisfied, failed: c.failed,
+        timedOut: c.timedOut, failMsg: c.failMsg, tip: c.tip,
+      })),
+      maintTimeLeft: G.maintTimeLeft,
+      boxStack: G.boxStack,
+      inventory: { ...G.inventory },
+      maxCombo: G.maxCombo,
+      correctCount: G.correctCount,
+      totalCount: G.totalCount,
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot));
+  } catch (e) {
+    console.warn('Save failed:', e);
+  }
+}
+
+function loadGameState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data.version !== SAVE_VERSION) return null;
+    if (Date.now() - data.savedAt > SAVE_TTL_MS) return null;
+    return data;
+  } catch (e) { return null; }
+}
+
+function hasResumableGame() {
+  const data = loadGameState();
+  return data && data.phase && data.phase !== 'IDLE'
+    && data.reputation > 0 && data.money >= 0;
+}
+
+function clearSavedGame() {
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+}
+
+function resumeGame() {
+  const data = loadGameState();
+  if (!data) { startNewGame(); return; }
+
+  closeResumeModal();
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+
+  G = freshState();
+  Object.assign(G, {
+    money: data.money,
+    reputation: data.reputation,
+    score: data.score,
+    level: data.level || 0,
+    phase: data.phase,
+    roundCount: data.roundCount || 0,
+    chosenDenom: data.chosenDenom,
+    selectedSlices: data.selectedSlices || [0, 0],
+    activePizzaInput: (data.activePizzaInput ?? 0),
+    customers: data.customers || [],
+    maintTimeLeft: data.maintTimeLeft || LEVELS[data.level || 0].maintInterval,
+    boxStack: data.boxStack || 0,
+    inventory: data.inventory || { toppingBomb: 0, towerMagnet: 0, xrayGoggles: 0 },
+    maxCombo: data.maxCombo || 0,
+    correctCount: data.correctCount || 0,
+    totalCount: data.totalCount || 0,
+  });
+
+  // 타이머 재가동
+  startMaintTimer(/*keepRemaining=*/true);
+  if (G.phase === 'ORDER' || G.phase === 'SERVE') startCustomerTimers();
+
+  renderBoxTower(false);
+  render();
+  showMsg('🎮 이어서 시작합니다!', 'info', 2000);
+}
+
+/* 이어하기 모달 */
+function openResumeModal() {
+  const data = loadGameState();
+  if (!data) { startNewGame(); return; }
+  const lvlName = (LEVELS[data.level || 0] || {}).name || '?';
+  const elapsed = Math.round((Date.now() - data.savedAt) / 60000);
+  const elapsedStr = elapsed < 1 ? '방금 전' :
+                     elapsed < 60 ? `${elapsed}분 전` :
+                     elapsed < 1440 ? `${Math.floor(elapsed/60)}시간 전` :
+                     `${Math.floor(elapsed/1440)}일 전`;
+  document.getElementById('resume-info').innerHTML = `
+    <div class="resume-row"><span>🎮 난이도</span><b>Lv.${(data.level||0)+1} ${lvlName}</b></div>
+    <div class="resume-row"><span>🏆 점수</span><b>${(data.score||0).toLocaleString()}점</b></div>
+    <div class="resume-row"><span>💰 자금</span><b>₩${(data.money||0).toLocaleString()}</b></div>
+    <div class="resume-row"><span>⭐ 평판</span><b>${Math.round(data.reputation||0)}%</b></div>
+    <div class="resume-row"><span>📦 라운드</span><b>${data.roundCount||0}</b></div>
+    <div class="resume-row"><span>🕐 마지막 플레이</span><b>${elapsedStr}</b></div>
+  `;
+  const bd = document.getElementById('resume-backdrop');
+  bd.classList.remove('active');
+  void bd.offsetWidth;
+  bd.classList.add('active');
+}
+function closeResumeModal() {
+  document.getElementById('resume-backdrop').classList.remove('active');
+}
+function discardSaveAndStart() {
+  closeResumeModal();
+  startNewGame();
+}
+
+/* 페이지 떠나기 / 백그라운드 전환 시 자동 저장 */
+window.addEventListener('beforeunload', () => { saveGameState(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') saveGameState();
+});
+window.addEventListener('pagehide', () => { saveGameState(); });
 
 /* ═══════════════════════════════════════════════
    GUIDE MODAL
@@ -3571,12 +3790,19 @@ async function fetchAndRenderRankModal(sort) {
     wrap.innerHTML = `<div id="rank-modal-loading" style="color:#ff4444">❌ 랭킹 로드 실패: ${err.message}</div>`;
   }
 }
-// Auto-open on first visit
+// Auto-open on first visit (이어할 게임 있으면 이어하기 모달 우선)
 window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(openGuide, 600);
+  setTimeout(() => {
+    if (hasResumableGame()) {
+      openResumeModal();
+    } else {
+      openGuide();
+    }
+  }, 600);
 });
 
 function restartGame() {
+  clearSavedGame();
   document.getElementById('gameover-screen').style.display = 'none';
   document.getElementById('game').style.display = 'flex';
   stopAll();
