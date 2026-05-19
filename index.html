@@ -149,19 +149,19 @@ body{
   position:relative;z-index:1;
   display:flex;flex-direction:column;
   height:100vh;max-width:1280px;margin:0 auto;
-  padding:8px 12px;gap:8px;
+  padding:6px 10px;gap:6px;
 }
 
 /* ── HUD ── */
 #hud{
-  display:flex;gap:10px;align-items:center;flex-shrink:0;
+  display:flex;gap:8px;align-items:center;flex-shrink:0;
   background:rgba(0,15,40,.85);
-  border:1px solid #00ffff25;border-radius:12px;
-  padding:8px 16px;backdrop-filter:blur(12px);
+  border:1px solid #00ffff25;border-radius:10px;
+  padding:6px 12px;backdrop-filter:blur(12px);
 }
-.hud-item{display:flex;flex-direction:column;align-items:center;min-width:85px}
+.hud-item{display:flex;flex-direction:column;align-items:center;min-width:70px}
 .hud-label{font-size:9px;color:#ffffff55;letter-spacing:2px;text-transform:uppercase}
-.hud-val{font-size:20px;font-weight:700}
+.hud-val{font-size:17px;font-weight:700}
 .hv-money{color:#ffe000;text-shadow:0 0 10px #ffe000}
 .hv-rep{color:#00ff88;text-shadow:0 0 10px #00ff88}
 .hv-level{color:#ff44ff;text-shadow:0 0 10px #ff44ff}
@@ -174,11 +174,11 @@ body{
 
 /* ── PHASE INDICATOR ── */
 #phase-bar{
-  display:flex;gap:6px;justify-content:center;align-items:center;
+  display:flex;gap:5px;justify-content:center;align-items:center;
   flex-shrink:0;padding:0 4px;
 }
 .ph-step{
-  padding:3px 12px;border-radius:20px;font-size:10px;letter-spacing:1px;
+  padding:2px 10px;border-radius:18px;font-size:10px;letter-spacing:1px;
   background:rgba(255,255,255,.04);border:1px solid #ffffff10;color:#ffffff40;
   transition:all .3s;
 }
@@ -189,23 +189,25 @@ body{
 
 /* ── MAIN AREA ── */
 #main-area{
-  display:flex;gap:10px;flex:1;min-height:0;
+  display:flex;gap:8px;flex:1;min-height:0;
 }
 
 /* ── CUSTOMERS PANEL ── */
 #customers-panel{
-  width:210px;flex-shrink:0;
-  display:flex;flex-direction:column;gap:8px;overflow:visible;
+  width:200px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:6px;
+  min-height:0;
 }
+.cust-card{min-height:0}
 #customers-panel-title{
   font-size:9px;color:#ffffff40;letter-spacing:2px;text-align:center;
 }
 .cust-card{
   background:rgba(0,15,45,.88);
-  border:1px solid #0055ff30;border-radius:12px;
-  padding:10px 12px;position:relative;
+  border:1px solid #0055ff30;border-radius:10px;
+  padding:7px 9px;position:relative;
   transition:border-color .3s,box-shadow .3s,background .3s;
-  flex:1;
+  flex:1 1 0;overflow:hidden;
 }
 .cust-card.waiting{border-color:#0055ff40}
 .cust-card.active-serve{
@@ -227,16 +229,16 @@ body{
   25%{transform:translateX(-6px)}
   75%{transform:translateX(6px)}
 }
-.cust-avatar{font-size:34px;text-align:center;margin-bottom:4px;line-height:1}
-.cust-name{font-size:11px;color:#aaa;text-align:center;margin-bottom:6px}
+.cust-avatar{font-size:26px;text-align:center;margin-bottom:2px;line-height:1}
+.cust-name{font-size:10px;color:#aaa;text-align:center;margin-bottom:4px}
 .cust-order-box{
-  background:rgba(255,255,255,.04);border-radius:8px;padding:7px;
-  text-align:center;margin-bottom:7px;
+  background:rgba(255,255,255,.04);border-radius:7px;padding:5px;
+  text-align:center;margin-bottom:5px;
 }
 .cust-order-label{font-size:9px;color:#ffffff50;letter-spacing:1px;margin-bottom:4px}
 .fraction{
   display:inline-flex;flex-direction:column;align-items:center;
-  font-size:22px;font-weight:700;color:#fff;line-height:1.1;
+  font-size:18px;font-weight:700;color:#fff;line-height:1.1;
 }
 .fraction-line{width:120%;height:2px;background:#fff;margin:2px 0}
 
@@ -287,8 +289,8 @@ body{
   font-size:11px;text-align:center;margin-top:5px;min-height:16px;font-weight:600;
 }
 .cust-serve-btn{
-  width:100%;margin-top:7px;padding:6px;border-radius:7px;border:none;
-  font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;
+  width:100%;margin-top:5px;padding:5px;border-radius:6px;border:none;
+  font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;
   transition:all .15s;
 }
 .cust-serve-btn.active-btn{
@@ -300,15 +302,15 @@ body{
 
 /* ── KITCHEN ── */
 #kitchen-area{
-  flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;
+  flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;
 }
 
 /* ── PIZZA STAGE ── */
 #pizza-stage{
-  flex:1;display:flex;gap:16px;justify-content:center;align-items:center;
+  flex:1;display:flex;gap:14px;justify-content:center;align-items:center;
   background:rgba(0,8,25,.7);
-  border:1px solid #ffffff08;border-radius:16px;
-  position:relative;overflow:hidden;min-height:0;
+  border:1px solid #ffffff08;border-radius:14px;
+  position:relative;overflow:hidden;min-height:0;padding:6px;
 }
 #pizza-stage::before{
   content:'';position:absolute;inset:0;
@@ -328,6 +330,7 @@ body{
   filter:drop-shadow(0 0 12px rgba(255,190,0,.35));
   transition:filter .3s;
 }
+.pizza-svg-outer svg{display:block;max-width:100%;height:auto}
 .pizza-svg-outer:hover{
   filter:drop-shadow(0 0 18px rgba(255,190,0,.5));
 }
@@ -400,12 +403,12 @@ body{
 #controls-panel{
   flex-shrink:0;
   background:rgba(0,12,30,.9);
-  border:1px solid #ffffff10;border-radius:12px;
-  padding:12px 16px;
+  border:1px solid #ffffff10;border-radius:10px;
+  padding:8px 12px;
 }
 .ctrl-title{
   font-size:9px;color:#ffffff40;letter-spacing:3px;text-transform:uppercase;
-  text-align:center;margin-bottom:10px;
+  text-align:center;margin-bottom:6px;
 }
 #denom-row{
   display:flex;gap:7px;justify-content:center;flex-wrap:wrap;
@@ -533,17 +536,14 @@ body{
   background:linear-gradient(135deg,#ffe000,#ff8800);color:#111;
   box-shadow:0 0 12px #ffe00040;
 }
-.act-btn.skip{
-  background:linear-gradient(135deg,#666,#444);color:#ccc;
-}
 
 /* ── NUMPAD ── */
 #numpad{
-  width:180px;flex-shrink:0;
-  display:flex;flex-direction:column;gap:6px;
+  width:170px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:5px;
   background:rgba(0,12,35,.85);
-  border:1px solid #00ffff20;border-radius:12px;
-  padding:10px;
+  border:1px solid #00ffff20;border-radius:10px;
+  padding:7px;min-height:0;
 }
 #numpad-title{
   font-size:10px;color:#00ffff;letter-spacing:2px;text-align:center;
@@ -559,9 +559,9 @@ body{
   display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
 }
 .np-btn{
-  height:42px;border-radius:8px;border:1px solid #00ffff30;
+  height:36px;border-radius:7px;border:1px solid #00ffff30;
   background:rgba(0,30,60,.7);color:#00ffff;
-  font-size:18px;font-weight:700;cursor:pointer;
+  font-size:16px;font-weight:700;cursor:pointer;
   transition:all .12s;font-family:inherit;
 }
 .np-btn:hover{
@@ -586,8 +586,8 @@ body{
 }
 .np-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
 #numpad-log{
-  margin-top:6px;display:flex;flex-direction:column;gap:3px;
-  max-height:140px;overflow:hidden;
+  margin-top:4px;display:flex;flex-direction:column;gap:3px;
+  flex:1 1 0;min-height:0;overflow:hidden;
 }
 #numpad-log-title{font-size:9px;color:#ffffff30;letter-spacing:1px;text-align:center}
 
@@ -734,9 +734,9 @@ body{
 #shop{
   flex-shrink:0;
   background:rgba(0,10,30,.9);
-  border:1px solid #ffe00030;border-radius:12px;
-  padding:8px 8px 6px;backdrop-filter:blur(8px);
-  margin-top:4px;
+  border:1px solid #ffe00030;border-radius:10px;
+  padding:5px 6px 4px;backdrop-filter:blur(8px);
+  margin-top:2px;
 }
 #shop-title{
   font-size:9px;color:#ffe00080;letter-spacing:2px;
@@ -984,6 +984,86 @@ body{
   10%  { transform:scale(1.4) translateY(0);     opacity:1 }
   16%  { transform:scale(1)   translateY(0);     opacity:1 }
   100% { transform:scale(1)   translateY(-120px); opacity:0 }
+}
+
+/* ── 워터마크 ── */
+#watermark{
+  position:fixed;bottom:8px;left:12px;z-index:999;
+  font-size:11px;color:rgba(255,255,255,.22);
+  letter-spacing:.6px;pointer-events:none;
+  font-family:'Segoe UI',Arial,sans-serif;
+  white-space:nowrap;
+}
+
+/* ── 스마트패드 / 작은 화면 대응 (≤ 900px 높이) ── */
+@media (max-height:900px){
+  #game{padding:5px 8px;gap:5px}
+  #hud{padding:5px 10px;gap:6px}
+  .hud-item{min-width:62px}
+  .hud-val{font-size:15px}
+  .hud-label{font-size:8px;letter-spacing:1px}
+  #maint-bar-bg{width:90px}
+  #phase-bar{gap:4px}
+  .ph-step{padding:2px 8px;font-size:9px}
+  #main-area{gap:6px}
+  #customers-panel{width:180px;gap:5px}
+  #customers-panel-title{font-size:8px}
+  .cust-card{padding:6px 7px;border-radius:9px}
+  .cust-avatar{font-size:22px;margin-bottom:2px}
+  .cust-name{font-size:9px;margin-bottom:3px}
+  .cust-order-box{padding:4px;margin-bottom:4px}
+  .cust-order-label{font-size:8px}
+  .fraction{font-size:15px}
+  .cust-serve-btn{padding:4px;font-size:10px;margin-top:4px}
+  #shop{padding:4px 5px 3px}
+  #shop-title{font-size:8px;margin-bottom:3px}
+  .shop-item{padding:4px 2px 3px}
+  .shop-item-icon{font-size:18px}
+  .shop-item-name{font-size:8px}
+  .shop-item-price{font-size:8px}
+  #pizza-stage{gap:10px;padding:4px}
+  #controls-panel{padding:5px 10px}
+  .ctrl-title{font-size:8px;margin-bottom:4px}
+  #numpad{width:150px;padding:6px}
+  #numpad-title{font-size:9px}
+  #numpad-active{font-size:9px;padding:4px;min-height:20px}
+  #numpad-active b{font-size:11px}
+  .np-btn{height:32px;font-size:14px;border-radius:6px}
+  .pizza-slice-count{font-size:20px}
+  .slice-input{width:60px;height:30px;font-size:16px}
+  .frac-bar-input{width:60px}
+  .frac-input-den{font-size:18px}
+  #denom-input{width:110px;height:38px;font-size:20px}
+  .denom-input-label{font-size:11px}
+}
+
+@media (max-height:900px){
+  .pizza-svg-outer svg{width:180px;height:180px}
+}
+
+/* ── 더 작은 화면 (≤ 720px 높이) ── */
+@media (max-height:720px){
+  #game{padding:3px 6px;gap:3px}
+  #hud{padding:3px 8px;gap:5px}
+  .hud-item{min-width:55px}
+  .hud-val{font-size:13px}
+  #customers-panel{width:170px}
+  .cust-avatar{font-size:18px}
+  .fraction{font-size:13px}
+  #numpad{width:140px}
+  .np-btn{height:28px;font-size:13px}
+  #pizza-stage{gap:8px}
+  .pizza-svg-outer svg{width:150px;height:150px}
+  .slice-input{width:50px;height:26px;font-size:14px}
+  .frac-bar-input{width:50px}
+  .frac-input-den{font-size:15px}
+}
+
+/* ── 매우 작은 화면 (≤ 600px 높이) ── */
+@media (max-height:600px){
+  .pizza-svg-outer svg{width:130px;height:130px}
+  .np-btn{height:24px;font-size:12px}
+  #numpad{width:128px;padding:5px}
 }
 
 /* ── FEVER SHIPS ── */
@@ -1408,6 +1488,9 @@ body{
 
 <!-- Floating message -->
 <div id="float-msg"></div>
+
+<!-- 워터마크 -->
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00013</div>
 
 <!-- PIZZA BOX TOWER -->
 <div id="box-tower"></div>
@@ -1896,14 +1979,12 @@ function renderPizzaStage() {
         <div class="pizza-svg-outer">${makePizzaSVG(i, denom, sel)}</div>
         <div class="slice-input-wrap">
           <div class="frac-with-input">
-            <input type="number" class="slice-input" id="slice-input-${i}"
-              min="0" max="${denom}" value="${sel > 0 ? sel : ''}"
+            <input type="text" class="slice-input" id="slice-input-${i}"
+              value="${sel > 0 ? sel : ''}"
               ${inputDisabled ? 'disabled' : ''}
-              inputmode="none"
-              ontouchstart="event.preventDefault();"
-              ontouchend="event.preventDefault(); if(!this.disabled){ setActivePizza(${i}); this.focus({preventScroll:true}); }"
-              onfocus="setActivePizza(${i})"
-              oninput="onSliceInputChange(${i}, this.value)">
+              readonly inputmode="none"
+              onclick="if(!this.disabled)setActivePizza(${i})"
+              ontouchend="event.preventDefault(); if(!this.disabled)setActivePizza(${i})">
             <div class="frac-bar-input"></div>
             <span class="frac-input-den">${denom}</span>
           </div>
@@ -1947,12 +2028,9 @@ function renderControls() {
     denomRow.innerHTML = `
       <div class="denom-input-group">
         <label class="denom-input-label">통분 조각 수 (공통분모):</label>
-        <input type="number" id="denom-input" min="2" max="200" placeholder="예: 30"
-               value="${prevVal}" autocomplete="off" inputmode="none"
-               ontouchstart="event.preventDefault();"
-               ontouchend="event.preventDefault(); this.focus({preventScroll:true});"
-               oninput="this.classList.toggle('has-value', this.value.length>0)"
-               onkeydown="if(event.key==='Enter'){submitDenom();}"
+        <input type="text" id="denom-input" placeholder="예: 30"
+               value="${prevVal}" autocomplete="off"
+               readonly inputmode="none"
                class="${prevVal ? 'has-value' : ''}">
         <button class="act-btn cut" onclick="submitDenom()">🔪 커팅!</button>
       </div>
@@ -2000,7 +2078,7 @@ function renderControls() {
   // Action buttons
   const actionRow = document.getElementById('action-row');
   if (G.phase === 'ORDER') {
-    actionRow.innerHTML = `<button class="act-btn skip" onclick="skipRound()">⏭ 스킵 (평판 -5)</button>`;
+    actionRow.innerHTML = '';
   } else if (G.phase === 'CUT') {
     actionRow.innerHTML = `<div style="color:#00ffff;font-size:13px;text-align:center;padding:8px">🔪 피자를 ${G.chosenDenom}조각으로 커팅 중...</div>`;
   } else if (G.phase === 'SERVE') {
@@ -2293,20 +2371,25 @@ function setActivePizza(idx) {
   renderNumpad();
 }
 
-/* 터치 디바이스에서 input focus 시 키보드 억제 */
-document.addEventListener('focusin', function(e) {
-  const el = e.target;
-  if (!el) return;
-  const noKb = el.id === 'denom-input' ||
-               (el.classList && el.classList.contains('slice-input'));
-  if (!noKb) return;
-  // 터치 환경에서만 blur → 키보드 닫기
-  if (navigator.maxTouchPoints > 0) {
-    // 포커스는 유지하되 가상 키보드만 닫는 표준 방법이 없어 blur 후 재포커스
-    el.setAttribute('readonly', 'readonly');
-    setTimeout(() => el.removeAttribute('readonly'), 50);
+/* 데스크톱 물리 키보드 지원 — 게임 활성 상태에서 숫자/Enter/Backspace 입력 */
+document.addEventListener('keydown', function(e) {
+  if (G.phase !== 'ORDER' && G.phase !== 'SERVE') return;
+  // 닉네임 입력 등 다른 필드가 활성화돼 있으면 무시
+  const ae = document.activeElement;
+  if (ae && (ae.id === 'go-nickname' || ae.tagName === 'TEXTAREA')) return;
+
+  if (e.key >= '0' && e.key <= '9') {
+    numpadKey(e.key);
+  } else if (e.key === 'Backspace') {
+    numpadKey('⌫');
+    e.preventDefault();
+  } else if (e.key === 'Enter') {
+    if (G.phase === 'ORDER') submitDenom();
+    else if (G.phase === 'SERVE') numpadServe();
+  } else if (e.key === 'Escape' || (e.key && e.key.toLowerCase() === 'c')) {
+    numpadKey('C');
   }
-}, true);
+});
 
 function onSliceInputChange(idx, val) {
   const denom = G.chosenDenom;
@@ -2550,12 +2633,6 @@ function nextRound() {
   newRound();
 }
 
-function skipRound() {
-  loseRep(5);
-  addLog('⏭ 라운드 스킵 -5%', 'warning');
-  showMsg('⏭ 스킵! 평판 -5%', 'warning');
-  if (!checkGameOver()) newRound();
-}
 
 /* ═══════════════════════════════════════════════
    SHOP
