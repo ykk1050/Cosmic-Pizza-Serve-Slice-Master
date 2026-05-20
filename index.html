@@ -1698,7 +1698,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00028</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00029</div>
 
 <!-- 랭킹 등록용 숨김 form (file:// 환경에서 CORS 제약 없이 POST) -->
 <iframe name="ranking-sink" id="ranking-sink" style="display:none" title="ranking-sink"></iframe>
@@ -3569,8 +3569,10 @@ function privacyReEnter() {
   document.getElementById('go-nickname').select();
 }
 function privacyProceed() {
+  // ⚠️ 콜백을 먼저 지역변수에 보관 — closePrivacyModal()이 _privacyProceedCallback을 null로 만들기 때문
+  const cb = _privacyProceedCallback;
   closePrivacyModal();
-  if (_privacyProceedCallback) _privacyProceedCallback();
+  if (cb) cb();
 }
 
 /* ─── 랭킹 등록 (개인정보 체크 포함) ─── */
