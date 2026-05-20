@@ -624,6 +624,13 @@ body{
   background:linear-gradient(135deg,#ffe000,#ff8800);color:#111;
   box-shadow:0 0 12px #ffe00040;
 }
+.act-btn.recut{
+  background:linear-gradient(135deg,#ff6600,#cc3300);color:#fff;
+  box-shadow:0 0 12px #ff660040;
+  padding:8px 18px;font-size:12px;letter-spacing:.5px;
+  border:1px solid #ff660080;
+}
+.act-btn.recut:hover:not(:disabled){box-shadow:0 0 20px #ff6600aa}
 
 /* ── NUMPAD ── */
 #numpad{
@@ -1664,7 +1671,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.0002</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00021</div>
 
 <!-- 이어하기 모달 -->
 <div id="resume-backdrop">
@@ -2304,9 +2311,22 @@ function renderControls() {
     actionRow.innerHTML = `<div style="color:#00ffff;font-size:13px;text-align:center;padding:8px">🔪 피자를 ${G.chosenDenom}조각으로 커팅 중...</div>`;
   } else if (G.phase === 'SERVE') {
     const allServed = G.customers.every(c => c.served || c.timedOut);
-    actionRow.innerHTML = allServed
-      ? `<button class="act-btn next-round" onclick="nextRound()">🚀 다음 손님!</button>`
-      : `<div style="color:#ffffff40;font-size:12px;text-align:center;padding:8px">각 피자에서 조각을 클릭해 선택 후 손님 카드의 [서빙!] 버튼을 누르세요</div>`;
+    if (allServed) {
+      actionRow.innerHTML = `<button class="act-btn next-round" onclick="nextRound()">🚀 다음 손님!</button>`;
+    } else {
+      const cost = getRecutCost();
+      const canAfford = G.money >= cost;
+      actionRow.innerHTML = `
+        <div style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap">
+          <div style="color:#ffffff40;font-size:12px;text-align:center;padding:4px 8px">
+            각 피자에서 조각을 클릭해 선택 후 손님 카드의 [서빙!] 버튼을 누르세요
+          </div>
+          <button class="act-btn recut" onclick="recutDenominator()" ${canAfford ? '' : 'disabled'}
+                  title="피자 2판을 모두 버리고 통분을 다시 선택합니다. 피자 탑도 초기화돼요.">
+            🔄 통분 다시 고르기 (-₩${cost.toLocaleString()})
+          </button>
+        </div>`;
+    }
   } else if (G.phase === 'RESULT') {
     actionRow.innerHTML = `<button class="act-btn next-round" onclick="nextRound()">🚀 다음 손님!</button>`;
   }
@@ -2316,8 +2336,7 @@ function submitDenom() {
   const input = document.getElementById('denom-input');
   if (!input) return;
   const d = parseInt(input.value);
-  if (!d || d < 2 || d > 200) return; // 범위 밖이면 조용히 무시
-  if (!G.customers.every(c => d % c.denominator === 0)) return; // 공통분모 아니면 조용히 무시
+  if (!d || d < 2 || d > 200) return; // 범위(2~200)만 체크. 공통분모 여부는 검증하지 않고 진행
   selectDenom(d);
 }
 
@@ -2575,7 +2594,7 @@ function newRound() {
 
 function selectDenom(d) {
   if (G.phase !== 'ORDER') return;
-  if (!G.customers.every(c => d % c.denominator === 0)) return; // 조용히 무시
+  // 공통분모 여부와 무관하게 어떤 수든 진행 (결과 단계에서 정답을 알려줌)
 
   G.chosenDenom = d;
   G.selectedSlices = [0, 0];
@@ -3096,6 +3115,49 @@ function useXrayGoggles() {
   showMsg('🥽 X-Ray 활성화! 추천 분모를 확인하세요', 'success', 2000);
   addLog('🥽 X-Ray 활성화 - 1회 사용', 'info');
   render();
+}
+
+/* ─── 재커팅 (자금 소모, 피자 탑 초기화) ─── */
+function getRecutCost() {
+  return (G.level + 1) * 200 + 100; // Lv1=300, Lv2=500, Lv3=700, Lv4=900, Lv5=1100
+}
+
+function recutDenominator() {
+  if (G.phase !== 'SERVE' && G.phase !== 'CUT') {
+    showMsg('🔪 서빙 단계에서만 다시 자를 수 있어요', 'warning', 1500);
+    return;
+  }
+  const hasUnserved = G.customers.some(c => !c.served && !c.timedOut);
+  if (!hasUnserved) {
+    showMsg('🔪 이미 모든 손님이 처리됐어요', 'warning', 1500);
+    return;
+  }
+  const cost = getRecutCost();
+  if (G.money < cost) {
+    showMsg(`💰 자금 부족! ${cost.toLocaleString()}원이 필요해요`, 'error', 2000);
+    return;
+  }
+  // 확인 다이얼로그
+  if (!confirm(`🔪 통분을 다시 고르시겠어요?\n\n• 자금 -₩${cost.toLocaleString()} 소모\n• 피자 탑이 초기화돼요\n\n계속할까요?`)) {
+    return;
+  }
+  // 자금 차감
+  spendMoney(cost);
+  addLog(`🔄 재커팅 -₩${cost.toLocaleString()} (피자 탑 초기화)`, 'warning');
+  showMsg(`🔄 다시 자를 수 있어요 (-₩${cost.toLocaleString()})`, 'info', 2000);
+
+  // 피자 탑 초기화 (애니메이션 없이 그냥 리셋)
+  G.boxStack = 0;
+  renderBoxTower(false);
+
+  // 상태 초기화 후 ORDER 단계로 복귀
+  G.chosenDenom = null;
+  G.selectedSlices = [0, 0];
+  G.xrayActive = false;
+  setPhase('ORDER');
+
+  // 게임오버 체크 (재커팅 비용으로 자금 부족 났는지)
+  if (checkGameOver()) return;
 }
 
 function useToppingBomb() {
