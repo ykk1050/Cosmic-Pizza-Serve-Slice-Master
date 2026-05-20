@@ -3479,7 +3479,7 @@ function openPrivacyModal(issues, onProceed) {
       issues.map(i => `• ${i}`).join('<br>');
     document.getElementById('privacy-detected').style.display = 'block';
     document.getElementById('privacy-re-enter').textContent   = '✏️ 다시 입력하기';
-    document.getElementById('privacy-confirm').textContent    = '그냥 등록할게요';
+    document.getElementById('privacy-confirm').textContent    = '개인정보 없어요!';
   } else {
     // 이상 없음 — 닉네임 최종 확인
     document.getElementById('privacy-icon').textContent  = '✅';
