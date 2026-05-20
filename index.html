@@ -1698,7 +1698,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00022</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00023</div>
 
 <!-- 이어하기 모달 -->
 <div id="resume-backdrop">
@@ -3634,28 +3634,36 @@ async function _doSubmitRanking(nickname) {
   // 클라이언트 측 등급 계산 (file:// 폴백 시 사용)
   const clientGrade = calcEduGradeClient(accuracy, G.roundCount, G.maxCombo);
 
+  // ── form-encoded body (Apps Script에서 가장 안정적) ──
+  // Content-Type: application/x-www-form-urlencoded → simple request, redirect 시에도 body 보존
+  // Apps Script doPost는 e.parameter.payload로 안정적으로 접근
+  const formBody = new URLSearchParams();
+  formBody.append('payload', JSON.stringify(payload));
+
+  console.log('[Ranking] 전송 시작', { url: APPS_SCRIPT_URL, payload });
+
   // ── 1차 시도: 정상 CORS fetch (http/https 환경에서 응답 읽기 가능) ──
   try {
     const res  = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      body:   JSON.stringify(payload),
+      body:   formBody,
+      redirect: 'follow',
     });
     const json = await res.json();
+    console.log('[Ranking] 서버 응답', json);
     if (json.success) {
       _finalizeRankingSuccess(json.grade);
       return;
     } else {
-      // 서버에서 명시적으로 거절 (조작 의심, 검증 실패 등)
       throw new Error(json.error || '서버 오류');
     }
   } catch (err) {
-    // 에러 종류 판단
+    console.warn('[Ranking] 1차 시도 실패:', err);
     const isCorsOrNetwork =
       err.name === 'TypeError' ||
-      /Failed to fetch|NetworkError|CORS|cross\-origin|opaque/i.test(err.message || '');
+      /Failed to fetch|NetworkError|CORS|cross\-origin|opaque|Unexpected token/i.test(err.message || '');
 
     if (!isCorsOrNetwork) {
-      // 서버 거절 — 사용자에게 보여줘야 함 (조작 감지 등)
       const msg = document.getElementById('go-submit-msg');
       msg.textContent = `❌ 등록 실패: ${err.message}`;
       msg.className = 'err';
@@ -3666,20 +3674,23 @@ async function _doSubmitRanking(nickname) {
   }
 
   // ── 2차 시도: file:// 또는 CORS 차단 환경 → no-cors 폴백 ──
-  // 응답 본문을 읽을 수 없어 서버 결과 확인은 불가하지만, 시트에는 정상 기록됨
+  // form-encoded는 simple request라 no-cors와 완벽 호환
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
-      body: JSON.stringify(payload),
+      body: formBody,
+      redirect: 'follow',
     });
+    console.log('[Ranking] no-cors 전송 완료 (응답 확인 불가, 시트 직접 확인)');
     _finalizeRankingSuccess(
-      clientGrade.label.replace(/^[^\s]+\s+/, ''), // 이모지 제거
-      'ℹ️ 로컬 파일(file://)에서 실행 중이라 서버 응답은 확인 불가하지만 시트에는 기록됐어요.'
+      clientGrade.label.replace(/^[^\s]+\s+/, ''),
+      'ℹ️ 로컬 파일 실행 중 — 시트는 잠시 후 직접 확인해주세요.'
     );
   } catch (err) {
+    console.error('[Ranking] 2차 시도 실패:', err);
     const msg = document.getElementById('go-submit-msg');
-    msg.textContent = `❌ 등록 실패: ${err.message || '네트워크 오류'}`;
+    msg.textContent = `❌ 등록 실패: ${err.message || '네트워크 오류'} (콘솔 확인)`;
     msg.className = 'err';
     btn.disabled = false;
     btn.textContent = '🏆 랭킹 등록';
