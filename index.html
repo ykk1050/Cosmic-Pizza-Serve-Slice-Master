@@ -1664,7 +1664,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00019</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.0002</div>
 
 <!-- 이어하기 모달 -->
 <div id="resume-backdrop">
@@ -1994,6 +1994,9 @@ function freshState() {
     maxCombo: 0,      // 도달한 최대 피자 박스 탑 높이
     correctCount: 0,  // 정확히 맞춘 서빙 수
     totalCount: 0,    // 총 서빙 시도 수
+    // 조작 방지
+    playStartAt: 0,   // 이번 세션 시작 시각
+    playMsAccum: 0,   // 이전 세션들의 누적 플레이 시간
   };
 }
 
@@ -3467,12 +3470,28 @@ function submitRanking() {
   openPrivacyModal(issues, () => _doSubmitRanking(nickname));
 }
 
+/* ─── 간단한 체크섬 (조작 방지) ─── */
+const ANTICHEAT_SALT = 'CPSM_v1_4f9a82';   // 서버와 동일해야 함
+function makeChecksum(p) {
+  const str = [p.score, p.round, p.correct, p.total, p.maxCombo, p.accuracy, p.playMs, p.nickname, ANTICHEAT_SALT].join('|');
+  // FNV-1a 32bit hash
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h.toString(36);
+}
+
 async function _doSubmitRanking(nickname) {
   const btn = document.getElementById('go-submit-btn');
   btn.disabled = true;
   btn.textContent = '⏳ 등록 중...';
 
   const accuracy = G.totalCount > 0 ? Math.round(G.correctCount / G.totalCount * 100) : 0;
+  // 누적 플레이 시간 (ms)
+  const playMs = (G.playMsAccum || 0) + (G.playStartAt ? Date.now() - G.playStartAt : 0);
+
   const payload  = {
     nickname,
     score:    G.score,
@@ -3483,7 +3502,9 @@ async function _doSubmitRanking(nickname) {
     accuracy,
     level:    G.level + 1,
     money:    G.money,
+    playMs,
   };
+  payload.checksum = makeChecksum(payload);
 
   try {
     const res  = await fetch(APPS_SCRIPT_URL, {
@@ -3740,6 +3761,8 @@ function saveGameState() {
       maxCombo: G.maxCombo,
       correctCount: G.correctCount,
       totalCount: G.totalCount,
+      // 누적 플레이 시간 (이번 세션 + 이전 누적)
+      playMsAccum: (G.playMsAccum || 0) + (G.playStartAt ? Date.now() - G.playStartAt : 0),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot));
   } catch (e) {
@@ -3794,6 +3817,8 @@ function resumeGame() {
     maxCombo: data.maxCombo || 0,
     correctCount: data.correctCount || 0,
     totalCount: data.totalCount || 0,
+    playStartAt: Date.now(),
+    playMsAccum: data.playMsAccum || 0,
   });
 
   // 타이머 재가동
