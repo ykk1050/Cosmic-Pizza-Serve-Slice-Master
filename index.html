@@ -176,6 +176,38 @@ body{
 .hv-level{color:#ff44ff;text-shadow:0 0 10px #ff44ff}
 .hv-score{color:#ff8800;text-shadow:0 0 10px #ff8800}
 #maint-wrap{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+
+/* ── BGM 컨트롤 ── */
+#bgm-controls.hud-item{
+  min-width:auto;padding:2px 8px;border-radius:8px;
+  background:linear-gradient(135deg,rgba(0,255,255,.05),rgba(255,68,255,.04));
+  border:1px solid #00ffff30;
+}
+.bgm-row{display:flex;align-items:center;gap:4px;line-height:1}
+.bgm-btn{
+  background:rgba(0,30,60,.7);border:1px solid #00ffff40;
+  color:#00ffff;font-size:13px;
+  width:24px;height:24px;border-radius:6px;
+  cursor:pointer;padding:0;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .12s;
+}
+.bgm-btn:hover{background:rgba(0,60,120,.8);border-color:#00ffff;transform:scale(1.05)}
+.bgm-btn.muted{color:#ff6666;border-color:#ff666660;background:rgba(60,0,0,.5)}
+#bgm-volume{
+  -webkit-appearance:none;appearance:none;
+  width:60px;height:4px;background:#1a1a3a;
+  border-radius:2px;outline:none;cursor:pointer;
+}
+#bgm-volume::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:12px;height:12px;background:#00ffff;border-radius:50%;
+  cursor:pointer;box-shadow:0 0 6px #00ffff;
+}
+#bgm-volume::-moz-range-thumb{
+  width:12px;height:12px;background:#00ffff;border-radius:50%;
+  border:none;cursor:pointer;box-shadow:0 0 6px #00ffff;
+}
 #maint-label{font-size:9px;color:#ff444488;letter-spacing:1px}
 #maint-bar-bg{width:120px;height:6px;background:#1a1a3a;border-radius:3px;overflow:hidden}
 #maint-bar{height:100%;background:linear-gradient(90deg,#ff4444,#ff8800);border-radius:3px;transition:width .3s linear}
@@ -1115,6 +1147,9 @@ body{
   #level-badge-emoji{font-size:12px}
   #level-badge-num{font-size:9px;padding:1px 4px}
   #level-badge-stars{font-size:8px}
+  .bgm-btn{width:20px;height:20px;font-size:11px}
+  #bgm-volume{width:48px;height:3px}
+  #bgm-volume::-webkit-slider-thumb{width:10px;height:10px}
   #phase-bar{gap:4px}
   .ph-step{padding:2px 8px;font-size:9px}
   #main-area{gap:6px}
@@ -1547,12 +1582,27 @@ body{
       <span class="hud-label">📦 라운드</span>
       <span class="hud-val" style="color:#fff" id="hud-round">1</span>
     </div>
+
+    <!-- BGM 컨트롤 -->
+    <div id="bgm-controls" class="hud-item">
+      <span class="hud-label">🎵 BGM</span>
+      <div class="bgm-row">
+        <button id="bgm-play" class="bgm-btn" onclick="toggleBgmPlay()" title="재생/일시정지">⏸</button>
+        <button id="bgm-mute" class="bgm-btn" onclick="toggleBgmMute()" title="음소거">🔊</button>
+        <input type="range" id="bgm-volume" min="0" max="100" value="35"
+               oninput="setBgmVolume(this.value)" title="볼륨">
+      </div>
+    </div>
+
     <div id="maint-wrap">
       <span id="maint-label">🔧 유지비 카운트다운</span>
       <div id="maint-bar-bg"><div id="maint-bar" style="width:100%"></div></div>
       <span id="maint-cost-label">-₩30 / 25초</span>
     </div>
   </div>
+
+  <!-- BGM Audio -->
+  <audio id="bgm-audio" src="Level_One_Bound.mp3" loop preload="auto"></audio>
 
   <!-- Phase bar -->
   <div id="phase-bar">
@@ -1614,7 +1664,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00018</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00019</div>
 
 <!-- 이어하기 모달 -->
 <div id="resume-backdrop">
@@ -3267,6 +3317,7 @@ function calcEduGradeClient(accuracy, round, maxCombo) {
 
 function showGameOver(title, sub, emoji) {
   stopAll();
+  pauseBgm();
   G.phase = 'IDLE';
   clearSavedGame(); // 게임오버 시 저장 데이터 삭제
 
@@ -3542,10 +3593,114 @@ function startNewGame() {
   G.score = 0;
   G.level = 0;
   G.roundCount = 0;
+  G.playStartAt = Date.now();          // 플레이 시작 시각 (조작 방지용)
+  G.playMsAccum = 0;                   // 누적 플레이 시간(ms)
   renderBoxTower(false);
   startMaintTimer();
   newRound();
   saveGameState();
+  startBgm();
+}
+
+/* ═══════════════════════════════════════════════
+   BGM 컨트롤
+═══════════════════════════════════════════════ */
+const BGM_PREF_KEY = 'cosmicPizza_bgmPrefs_v1';
+let _bgmStarted = false;
+
+function getBgmPrefs() {
+  try {
+    return JSON.parse(localStorage.getItem(BGM_PREF_KEY)) ||
+           { volume: 35, muted: false, paused: false };
+  } catch (e) { return { volume: 35, muted: false, paused: false }; }
+}
+function saveBgmPrefs(prefs) {
+  try { localStorage.setItem(BGM_PREF_KEY, JSON.stringify(prefs)); } catch(e){}
+}
+
+function initBgm() {
+  const audio = document.getElementById('bgm-audio');
+  const prefs = getBgmPrefs();
+  audio.volume = prefs.muted ? 0 : prefs.volume / 100;
+  document.getElementById('bgm-volume').value = prefs.volume;
+  document.getElementById('bgm-mute').textContent = prefs.muted ? '🔇' : '🔊';
+  document.getElementById('bgm-mute').classList.toggle('muted', prefs.muted);
+  document.getElementById('bgm-play').textContent = prefs.paused ? '▶' : '⏸';
+}
+
+function startBgm() {
+  const audio = document.getElementById('bgm-audio');
+  if (!audio) return;
+  const prefs = getBgmPrefs();
+  if (prefs.paused) return;
+  audio.play().then(() => {
+    _bgmStarted = true;
+    document.getElementById('bgm-play').textContent = '⏸';
+  }).catch(err => {
+    // 모바일/브라우저 자동재생 제한 — 첫 사용자 입력 시 재생
+    console.log('Autoplay deferred:', err.message);
+  });
+}
+
+function pauseBgm() {
+  const audio = document.getElementById('bgm-audio');
+  if (audio) audio.pause();
+}
+
+function toggleBgmPlay() {
+  const audio = document.getElementById('bgm-audio');
+  const btn = document.getElementById('bgm-play');
+  const prefs = getBgmPrefs();
+  if (audio.paused) {
+    audio.play().catch(()=>{});
+    btn.textContent = '⏸';
+    prefs.paused = false;
+  } else {
+    audio.pause();
+    btn.textContent = '▶';
+    prefs.paused = true;
+  }
+  saveBgmPrefs(prefs);
+}
+
+function toggleBgmMute() {
+  const audio = document.getElementById('bgm-audio');
+  const btn = document.getElementById('bgm-mute');
+  const slider = document.getElementById('bgm-volume');
+  const prefs = getBgmPrefs();
+  prefs.muted = !prefs.muted;
+  audio.volume = prefs.muted ? 0 : prefs.volume / 100;
+  btn.textContent = prefs.muted ? '🔇' : '🔊';
+  btn.classList.toggle('muted', prefs.muted);
+  saveBgmPrefs(prefs);
+}
+
+function setBgmVolume(val) {
+  const audio = document.getElementById('bgm-audio');
+  const btn = document.getElementById('bgm-mute');
+  const v = Math.max(0, Math.min(100, parseInt(val) || 0));
+  const prefs = getBgmPrefs();
+  prefs.volume = v;
+  prefs.muted = (v === 0);
+  audio.volume = prefs.muted ? 0 : v / 100;
+  btn.textContent = prefs.muted ? '🔇' : '🔊';
+  btn.classList.toggle('muted', prefs.muted);
+  saveBgmPrefs(prefs);
+  // 첫 사용자 입력으로 자동재생 잠금 해제
+  if (!_bgmStarted) startBgm();
+}
+
+// 자동재생 제한 해제용 — 첫 터치/클릭 시 BGM 시작 시도
+function unlockAudioOnFirstInteraction() {
+  const handler = () => {
+    if (document.getElementById('game').style.display !== 'none') {
+      startBgm();
+    }
+    document.removeEventListener('touchstart', handler);
+    document.removeEventListener('click', handler);
+  };
+  document.addEventListener('touchstart', handler, { once: true });
+  document.addEventListener('click', handler, { once: true });
 }
 
 /* ═══════════════════════════════════════════════
@@ -3647,6 +3802,7 @@ function resumeGame() {
 
   renderBoxTower(false);
   render();
+  startBgm();
   showMsg('🎮 이어서 시작합니다!', 'info', 2000);
 }
 
@@ -3802,6 +3958,8 @@ async function fetchAndRenderRankModal(sort) {
 }
 // Auto-open on first visit (이어할 게임 있으면 이어하기 모달 우선)
 window.addEventListener('DOMContentLoaded', () => {
+  initBgm();
+  unlockAudioOnFirstInteraction();
   setTimeout(() => {
     if (hasResumableGame()) {
       openResumeModal();
@@ -3828,6 +3986,7 @@ function restartGame() {
   renderBoxTower(false);
   startMaintTimer();
   newRound();
+  startBgm();
 }
 </script>
 </body>
