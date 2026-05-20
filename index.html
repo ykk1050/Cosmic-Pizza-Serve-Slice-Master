@@ -1698,7 +1698,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00024</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00025</div>
 
 <!-- 이어하기 모달 -->
 <div id="resume-backdrop">
@@ -3403,7 +3403,7 @@ function stopAll() {
 ═══════════════════════════════════════════════ */
 
 // ▶ Apps Script 배포 URL을 여기에 붙여넣으세요
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPuYA1VRxgd109Jd6WL8UBxQzcRhK5Ikg3P3Sqr9-alfp4UrSO-9TUooOUSeBX7kjhRg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9c7ZAdNTiiR7RLdru1mpr5_bWZ8MefFC0CzyapnK_K6WjeDi2BNpWU8oVDEbkGZvVnw/exec';
 
 function calcEduGradeClient(accuracy, round, maxCombo) {
   const weighted = accuracy * 0.6 + Math.min(round * 2, 20) + Math.min(maxCombo * 1.5, 15);
@@ -3634,11 +3634,10 @@ async function _doSubmitRanking(nickname) {
   // 클라이언트 측 등급 계산 (file:// 폴백 시 사용)
   const clientGrade = calcEduGradeClient(accuracy, G.roundCount, G.maxCombo);
 
-  // ── form-encoded body (Apps Script에서 가장 안정적) ──
-  // Content-Type: application/x-www-form-urlencoded → simple request, redirect 시에도 body 보존
-  // Apps Script doPost는 e.parameter.payload로 안정적으로 접근
-  const formBody = new URLSearchParams();
-  formBody.append('payload', JSON.stringify(payload));
+  // ── raw JSON body ──
+  // Content-Type: text/plain (기본값) → simple request, preflight 없음, no-cors 호환
+  // Apps Script doPost는 e.postData.contents 로 깔끔한 JSON 수신 → 구·신버전 서버 모두 호환
+  const jsonBody = JSON.stringify(payload);
 
   console.log('[Ranking] 전송 시작', { url: APPS_SCRIPT_URL, payload });
 
@@ -3646,7 +3645,7 @@ async function _doSubmitRanking(nickname) {
   try {
     const res  = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      body:   formBody,
+      body:   jsonBody,
       redirect: 'follow',
     });
     const json = await res.json();
@@ -3674,12 +3673,12 @@ async function _doSubmitRanking(nickname) {
   }
 
   // ── 2차 시도: file:// 또는 CORS 차단 환경 → no-cors 폴백 ──
-  // form-encoded는 simple request라 no-cors와 완벽 호환
+  // text/plain JSON body는 simple request라 no-cors와 완벽 호환
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
-      body: formBody,
+      body: jsonBody,
       redirect: 'follow',
     });
     console.log('[Ranking] no-cors 전송 완료 (응답 확인 불가, 시트 직접 확인)');
