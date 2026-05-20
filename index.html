@@ -1700,6 +1700,12 @@ body{
 <!-- 워터마크 -->
 <div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00026</div>
 
+<!-- 랭킹 등록용 숨김 form (file:// 환경에서 CORS 제약 없이 POST) -->
+<iframe name="ranking-sink" id="ranking-sink" style="display:none" title="ranking-sink"></iframe>
+<form id="ranking-form" method="POST" target="ranking-sink" style="display:none">
+  <input type="hidden" name="payload" id="ranking-form-payload">
+</form>
+
 <!-- 이어하기 모달 -->
 <div id="resume-backdrop">
   <div id="resume-modal">
@@ -2053,11 +2059,25 @@ const PIZZA_TOPPINGS = (function() {
   return pos;
 })();
 
+/* 분수 서빙 비교 — 손님 주문(cN/cD) vs 플레이어가 준 양(sel/denom)
+   반환: 0 = 정확히 일치, 1 = 너무 많음, -1 = 너무 적음
+   교차곱셈으로 정확히 비교 (반올림 오판정 방지) */
+function compareServing(sel, denom, cN, cD) {
+  const given = sel * cD;
+  const order = cN * denom;
+  if (given === order) return 0;
+  return given > order ? 1 : -1;
+}
+
 function makePizzaSVG(pizzaIdx, denom, selectedCount) {
   const W=280, H=280, cx=140, cy=140, r=118, cr=128;
-  const needed = G.customers[pizzaIdx]
-    ? Math.round(G.customers[pizzaIdx].numerator * denom / G.customers[pizzaIdx].denominator)
-    : 0;
+  // 힌트는 분모가 정확한 공통분모일 때(정수 조각수)만 표시
+  let needed = -1;
+  const _cust = G.customers[pizzaIdx];
+  if (_cust) {
+    const exact = _cust.numerator * denom / _cust.denominator;
+    if (Number.isInteger(exact)) needed = exact;
+  }
 
   // toppings
   let toppingsSVG = '';
@@ -2701,7 +2721,8 @@ function updateSlicesLightweight(pizzaIdx, skipInput) {
   const sel = G.selectedSlices[pizzaIdx];
   const denom = G.chosenDenom;
   const c = G.customers[pizzaIdx];
-  const needed = c ? Math.round(c.numerator * denom / c.denominator) : 0;
+  // 분수 정확 비교: 0=정답, 1=초과, -1=부족
+  const cmp = (c && sel > 0) ? compareServing(sel, denom, c.numerator, c.denominator) : null;
 
   // Update SVG slice highlights
   document.querySelectorAll(`path[data-pizza="${pizzaIdx}"]`).forEach((el, i) => {
@@ -2718,8 +2739,8 @@ function updateSlicesLightweight(pizzaIdx, skipInput) {
     void countEl.offsetWidth; // reflow to restart animation
     if (sel > 0) {
       countEl.classList.add('count-pop');
-      if (sel === needed) countEl.classList.add('count-correct');
-      else if (sel > needed) countEl.classList.add('count-over');
+      if (cmp === 0) countEl.classList.add('count-correct');
+      else if (cmp === 1) countEl.classList.add('count-over');
       else countEl.classList.add('count-partial');
     }
   }
@@ -2730,8 +2751,8 @@ function updateSlicesLightweight(pizzaIdx, skipInput) {
     input.classList.toggle('has-value', sel > 0);
     input.classList.remove('input-correct', 'input-over');
     if (sel > 0) {
-      if (sel === needed) input.classList.add('input-correct');
-      else if (sel > needed) input.classList.add('input-over');
+      if (cmp === 0) input.classList.add('input-correct');
+      else if (cmp === 1) input.classList.add('input-over');
     }
     if (!skipInput && document.activeElement !== input) input.value = sel > 0 ? sel : '';
   }
@@ -2853,7 +2874,6 @@ function serveCustomer(idx) {
   if (!c || c.served || c.timedOut) return;
 
   const denom = G.chosenDenom;
-  const needed = Math.round(c.numerator * denom / c.denominator);
   const selected = G.selectedSlices[idx];
 
   if (selected === 0) {
@@ -2866,8 +2886,13 @@ function serveCustomer(idx) {
 
   G.totalCount++; // 서빙 시도 카운트
 
-  if (selected === needed) {
-    // Perfect!
+  // 분수 정확 비교 (교차곱셈) — 반올림 오판정 방지
+  const cmp = compareServing(selected, denom, c.numerator, c.denominator);
+  // 정확한 정답 조각수 (공통분모가 아니면 소수)
+  const exactNeeded = c.numerator * denom / c.denominator;
+
+  if (cmp === 0) {
+    // Perfect! — 분수가 정확히 일치
     const earned = pizzaPrice + c.tip + lvlBonus;
     addMoney(earned);
     G.score += 100 + lvlBonus;
@@ -2876,24 +2901,23 @@ function serveCustomer(idx) {
     showMsg(`🎉 완벽! +₩${earned} +${100+lvlBonus}점`, 'success');
     addLog(`✅ ${c.name} 만족! +₩${earned}`, 'success');
     addPizzaBox();
-  } else if (selected > needed) {
-    // Too many slices
-    const extra = selected - needed;
+  } else if (cmp === 1) {
+    // Too much — 준 양이 주문보다 많음
+    const extra = Math.max(1, Math.round(selected - exactNeeded));
     const waste = extra * 25;
     spendMoney(waste);
     loseRep(5);
     c.failed = true;
-    c.failMsg = `😅 재료 낭비! (${extra}조각 초과)`;
-    showMsg(`😅 재료 낭비! -₩${waste} 평판-5%`, 'warning');
-    addLog(`⚠️ ${c.name}: 재료 낭비 -₩${waste}`, 'warning');
+    c.failMsg = `😅 양이 너무 많아요! (${frac(selected,denom)} ≠ ${frac(c.numerator,c.denominator)})`;
+    showMsg(`😅 양이 너무 많아요! -₩${waste} 평판-5%`, 'warning');
+    addLog(`⚠️ ${c.name}: 양 초과 -₩${waste}`, 'warning');
     collapseTower();
   } else {
-    // Too few slices
-    const missing = needed - selected;
+    // Too little — 준 양이 주문보다 적음
     loseRep(15);
     c.failed = true;
-    c.failMsg = `😠 양 부족! (${missing}조각 모자람)`;
-    showMsg(`😠 양이 모자라! 평판 -15%`, 'error');
+    c.failMsg = `😠 양이 부족해요! (${frac(selected,denom)} ≠ ${frac(c.numerator,c.denominator)})`;
+    showMsg(`😠 양이 부족해요! 평판 -15%`, 'error');
     addLog(`❌ ${c.name}: 양 부족 -15%`, 'error');
     collapseTower();
   }
@@ -3403,7 +3427,7 @@ function stopAll() {
 ═══════════════════════════════════════════════ */
 
 // ▶ Apps Script 배포 URL을 여기에 붙여넣으세요
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyMsxwtIsN5dXgKPkH0FyIVkgKnrDlGqCrqIE_BTFgylMYOidms61W4i8Xiq4hUt9vZ3g/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9c7ZAdNTiiR7RLdru1mpr5_bWZ8MefFC0CzyapnK_K6WjeDi2BNpWU8oVDEbkGZvVnw/exec';
 
 function calcEduGradeClient(accuracy, round, maxCombo) {
   const weighted = accuracy * 0.6 + Math.min(round * 2, 20) + Math.min(maxCombo * 1.5, 15);
@@ -3672,28 +3696,54 @@ async function _doSubmitRanking(nickname) {
     }
   }
 
-  // ── 2차 시도: file:// 또는 CORS 차단 환경 → no-cors 폴백 ──
-  // text/plain JSON body는 simple request라 no-cors와 완벽 호환
+  // ── 2차 시도: 숨김 form 제출 (file:// 환경에서 가장 확실) ──
+  // HTML form POST는 CORS 제약을 받지 않고, redirect도 자연스럽게 따라감.
+  // Apps Script doPost는 e.parameter.payload 로 수신.
   try {
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      body: jsonBody,
-      redirect: 'follow',
-    });
-    console.log('[Ranking] no-cors 전송 완료 (응답 확인 불가, 시트 직접 확인)');
+    await submitRankingViaForm(payload);
+    console.log('[Ranking] form 제출 완료 (시트에 기록됨)');
     _finalizeRankingSuccess(
       clientGrade.label.replace(/^[^\s]+\s+/, ''),
-      'ℹ️ 로컬 파일 실행 중 — 시트는 잠시 후 직접 확인해주세요.'
+      'ℹ️ 전송 완료! 구글 시트에서 잠시 후 확인하실 수 있어요.'
     );
   } catch (err) {
-    console.error('[Ranking] 2차 시도 실패:', err);
+    console.error('[Ranking] form 제출 실패:', err);
     const msg = document.getElementById('go-submit-msg');
     msg.textContent = `❌ 등록 실패: ${err.message || '네트워크 오류'} (콘솔 확인)`;
     msg.className = 'err';
     btn.disabled = false;
     btn.textContent = '🏆 랭킹 등록';
   }
+}
+
+/* 숨김 form + iframe 으로 랭킹 전송 (CORS 우회) */
+function submitRankingViaForm(payload) {
+  return new Promise((resolve, reject) => {
+    const form    = document.getElementById('ranking-form');
+    const iframe  = document.getElementById('ranking-sink');
+    const field   = document.getElementById('ranking-form-payload');
+    if (!form || !iframe || !field) {
+      reject(new Error('form 요소를 찾을 수 없습니다'));
+      return;
+    }
+    form.action  = APPS_SCRIPT_URL;
+    field.value  = JSON.stringify(payload);
+
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      iframe.removeEventListener('load', finish);
+      resolve();
+    };
+    // iframe load 이벤트 = 서버가 응답을 반환함 (POST 완료 신호)
+    iframe.addEventListener('load', finish);
+    // 안전장치: 6초 후에도 load 안 뜨면 전송된 것으로 간주
+    setTimeout(finish, 6000);
+
+    console.log('[Ranking] form 제출 →', APPS_SCRIPT_URL);
+    form.submit();
+  });
 }
 
 /* ─── 랭킹 조회 + 표시 ─── */
@@ -3948,8 +3998,10 @@ const SAVE_VERSION = 1;
 const SAVE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7일
 
 function saveGameState() {
-  // IDLE/RESULT 게임 오버 등은 저장 안 함
-  if (!G || G.phase === 'IDLE') return;
+  // 게임이 실제로 진행 중일 때만 저장
+  if (!G || !G.phase || G.phase === 'IDLE') return;
+  if (!Array.isArray(G.selectedSlices) || !Array.isArray(G.customers)) return;
+  if (typeof G.reputation !== 'number' || typeof G.money !== 'number') return;
   if (G.reputation <= 0 || G.money < 0) return;
 
   try {
