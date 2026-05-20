@@ -1336,8 +1336,35 @@ body{
 /* 정렬 기준 강조 열 */
 .rank-col-highlight{color:#ffe000!important;font-weight:900!important}
 
+#rank-search-wrap{
+  display:flex;align-items:center;gap:6px;margin-bottom:10px;
+}
+#rank-search{
+  flex:1;background:rgba(255,255,255,.05);
+  border:1.5px solid #ffe00040;border-radius:8px;
+  color:#fff;font-size:13px;padding:7px 12px;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+#rank-search::placeholder{color:#ffffff40}
+#rank-search:focus{border-color:#ffe000;box-shadow:0 0 10px #ffe00040}
+#rank-search-clear{
+  background:rgba(255,255,255,.06);border:1.5px solid #ffffff20;
+  color:#aaa;font-size:13px;width:30px;height:30px;border-radius:8px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+#rank-search-clear:hover{background:rgba(255,255,255,.12);color:#fff}
+#rank-search-result{
+  font-size:11px;color:#ffe00080;letter-spacing:.5px;
+  white-space:nowrap;min-width:80px;
+}
+.rank-table tr.rank-match td{
+  background:rgba(255,224,0,.10)!important;
+  border-bottom-color:#ffe00030!important;
+}
+.rank-table tr.rank-hidden{display:none}
 #rank-modal-table-wrap{
-  max-height:400px;overflow-y:auto;
+  max-height:420px;overflow-y:auto;
   scrollbar-width:thin;scrollbar-color:#ffe00040 transparent;
 }
 #rank-modal-loading{
@@ -1671,7 +1698,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00021</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00022</div>
 
 <!-- 이어하기 모달 -->
 <div id="resume-backdrop">
@@ -1722,6 +1749,11 @@ body{
       <button class="rank-tab"        data-sort="round"    onclick="switchRankTab('round')">📦 라운드</button>
       <button class="rank-tab"        data-sort="grade"    onclick="switchRankTab('grade')">🎓 등급</button>
       <button class="rank-tab"        data-sort="recent"   onclick="switchRankTab('recent')">🕐 최근</button>
+    </div>
+    <div id="rank-search-wrap">
+      <input id="rank-search" type="text" placeholder="🔍 닉네임 검색…" oninput="filterRankTable(this.value)">
+      <button id="rank-search-clear" onclick="clearRankSearch()" title="검색 초기화">✕</button>
+      <span id="rank-search-result"></span>
     </div>
     <div id="rank-modal-table-wrap">
       <div id="rank-modal-loading">🛸 랭킹을 불러오는 중...</div>
@@ -2004,6 +2036,8 @@ function freshState() {
     // 조작 방지
     playStartAt: 0,   // 이번 세션 시작 시각
     playMsAccum: 0,   // 이전 세션들의 누적 플레이 시간
+    // 랭킹 등록 상태
+    rankingSubmitted: false,  // 이번 게임에서 랭킹 등록 완료 여부
   };
 }
 
@@ -3416,13 +3450,17 @@ function showGameOver(title, sub, emoji) {
                        'rgba(255,68,68,.08)';
   }
 
-  // 제출 버튼/메시지 초기화
-  document.getElementById('go-submit-btn').disabled = false;
-  document.getElementById('go-submit-msg').textContent = '';
-  document.getElementById('go-submit-msg').className  = '';
+  // 제출 버튼/메시지/입력 초기화
+  const submitBtn = document.getElementById('go-submit-btn');
+  submitBtn.disabled = !!G.rankingSubmitted;
+  submitBtn.textContent = G.rankingSubmitted ? '✅ 등록 완료 (한 게임당 1회)' : '🏆 랭킹 등록';
+  document.getElementById('go-submit-msg').textContent = G.rankingSubmitted ? '✅ 이번 게임은 이미 랭킹에 등록됐어요!' : '';
+  document.getElementById('go-submit-msg').className  = G.rankingSubmitted ? 'ok' : '';
   document.getElementById('go-ranking-table').innerHTML = '';
   document.getElementById('go-ranking-btn').style.display = 'block';
-  document.getElementById('go-nickname').value = '';
+  const nickInput = document.getElementById('go-nickname');
+  nickInput.value = '';
+  nickInput.disabled = !!G.rankingSubmitted;
 
   document.getElementById('gameover-screen').style.display = 'flex';
 }
@@ -3513,6 +3551,16 @@ function privacyProceed() {
 
 /* ─── 랭킹 등록 (개인정보 체크 포함) ─── */
 function submitRanking() {
+  // 이미 등록 완료된 게임이면 차단
+  if (G.rankingSubmitted) {
+    const msg = document.getElementById('go-submit-msg');
+    msg.textContent = '✅ 이번 게임은 이미 랭킹에 등록됐어요!';
+    msg.className = 'ok';
+    return;
+  }
+  const btn = document.getElementById('go-submit-btn');
+  if (btn && btn.disabled) return; // 진행 중인 등록이 있으면 무시
+
   const nickname = document.getElementById('go-nickname').value.trim();
   if (!nickname) {
     const msg = document.getElementById('go-submit-msg');
@@ -3545,6 +3593,21 @@ function makeChecksum(p) {
   return h.toString(36);
 }
 
+/* 등록 성공 처리 — 버튼·플래그·UI 일괄 잠금 */
+function _finalizeRankingSuccess(gradeLabel, notice) {
+  const btn = document.getElementById('go-submit-btn');
+  const msg = document.getElementById('go-submit-msg');
+  msg.innerHTML = `✅ 랭킹 등록 완료! 등급: <b>${gradeLabel}</b>` +
+                  (notice ? `<br><span style="font-size:11px;color:#888">${notice}</span>` : '');
+  msg.className = 'ok';
+  btn.textContent = '✅ 등록 완료 (한 게임당 1회)';
+  btn.disabled = true;
+  G.rankingSubmitted = true;
+  const nickInput = document.getElementById('go-nickname');
+  if (nickInput) nickInput.disabled = true;
+  setTimeout(loadAndShowRanking, 800);
+}
+
 async function _doSubmitRanking(nickname) {
   const btn = document.getElementById('go-submit-btn');
   btn.disabled = true;
@@ -3568,26 +3631,57 @@ async function _doSubmitRanking(nickname) {
   };
   payload.checksum = makeChecksum(payload);
 
+  // 클라이언트 측 등급 계산 (file:// 폴백 시 사용)
+  const clientGrade = calcEduGradeClient(accuracy, G.roundCount, G.maxCombo);
+
+  // ── 1차 시도: 정상 CORS fetch (http/https 환경에서 응답 읽기 가능) ──
   try {
     const res  = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       body:   JSON.stringify(payload),
     });
     const json = await res.json();
-    const msg  = document.getElementById('go-submit-msg');
     if (json.success) {
-      msg.textContent = `✅ 랭킹 등록 완료! 등급: ${json.grade}`;
-      msg.className   = 'ok';
-      btn.textContent = '✅ 등록됨';
-      setTimeout(loadAndShowRanking, 800);
+      _finalizeRankingSuccess(json.grade);
+      return;
     } else {
+      // 서버에서 명시적으로 거절 (조작 의심, 검증 실패 등)
       throw new Error(json.error || '서버 오류');
     }
   } catch (err) {
+    // 에러 종류 판단
+    const isCorsOrNetwork =
+      err.name === 'TypeError' ||
+      /Failed to fetch|NetworkError|CORS|cross\-origin|opaque/i.test(err.message || '');
+
+    if (!isCorsOrNetwork) {
+      // 서버 거절 — 사용자에게 보여줘야 함 (조작 감지 등)
+      const msg = document.getElementById('go-submit-msg');
+      msg.textContent = `❌ 등록 실패: ${err.message}`;
+      msg.className = 'err';
+      btn.disabled = false;
+      btn.textContent = '🏆 랭킹 등록';
+      return;
+    }
+  }
+
+  // ── 2차 시도: file:// 또는 CORS 차단 환경 → no-cors 폴백 ──
+  // 응답 본문을 읽을 수 없어 서버 결과 확인은 불가하지만, 시트에는 정상 기록됨
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(payload),
+    });
+    _finalizeRankingSuccess(
+      clientGrade.label.replace(/^[^\s]+\s+/, ''), // 이모지 제거
+      'ℹ️ 로컬 파일(file://)에서 실행 중이라 서버 응답은 확인 불가하지만 시트에는 기록됐어요.'
+    );
+  } catch (err) {
     const msg = document.getElementById('go-submit-msg');
-    msg.textContent = `❌ 등록 실패: ${err.message}`;
-    msg.className   = 'err';
-    btn.disabled    = false;
+    msg.textContent = `❌ 등록 실패: ${err.message || '네트워크 오류'}`;
+    msg.className = 'err';
+    btn.disabled = false;
     btn.textContent = '🏆 랭킹 등록';
   }
 }
@@ -3645,13 +3739,63 @@ async function loadAndShowRanking() {
     tableDiv.innerHTML = html;
 
   } catch (err) {
-    tableDiv.innerHTML = `<div id="go-ranking-loading" style="color:#ff4444">❌ 랭킹 로드 실패: ${err.message}</div>`;
+    const hint = location.protocol === 'file:'
+      ? '<br><span style="font-size:11px;color:#888">💡 로컬 파일(file://)에서 실행 중이에요. 등록은 가능하지만 조회는 로컬 서버(예: <code>python -m http.server</code>)로 열어야 작동해요.</span>'
+      : '';
+    tableDiv.innerHTML = `<div id="go-ranking-loading" style="color:#ff4444">❌ 랭킹 로드 실패: ${err.message}${hint}</div>`;
     btn.style.display = 'block';
   }
 }
 
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ─── 랭킹 검색 / 필터 ─── */
+function filterRankTable(query) {
+  const q = String(query || '').trim().toLowerCase();
+  const rows = document.querySelectorAll('#rank-modal-table-wrap .rank-table tbody tr[data-nick]');
+  const resultLbl = document.getElementById('rank-search-result');
+  if (!rows.length) { if (resultLbl) resultLbl.textContent = ''; return; }
+
+  if (!q) {
+    rows.forEach(r => { r.classList.remove('rank-hidden', 'rank-match'); });
+    if (resultLbl) resultLbl.textContent = `${rows.length}명`;
+    return;
+  }
+
+  let matchCount = 0;
+  let firstMatchRank = null;
+  rows.forEach(r => {
+    const nick = r.getAttribute('data-nick') || '';
+    if (nick.includes(q)) {
+      r.classList.remove('rank-hidden');
+      r.classList.add('rank-match');
+      matchCount++;
+      if (firstMatchRank === null) firstMatchRank = r.getAttribute('data-rank');
+    } else {
+      r.classList.add('rank-hidden');
+      r.classList.remove('rank-match');
+    }
+  });
+
+  if (resultLbl) {
+    if (matchCount === 0) {
+      resultLbl.textContent = '🔍 결과 없음';
+      resultLbl.style.color = '#ff666680';
+    } else {
+      resultLbl.textContent = `🎯 ${matchCount}명 (최고 ${firstMatchRank}위)`;
+      resultLbl.style.color = '#ffe000';
+    }
+  }
+  // 첫 매칭 행으로 스크롤
+  const firstMatch = document.querySelector('#rank-modal-table-wrap .rank-table tbody tr.rank-match');
+  if (firstMatch) firstMatch.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function clearRankSearch() {
+  const input = document.getElementById('rank-search');
+  if (input) { input.value = ''; filterRankTable(''); input.focus(); }
 }
 
 /* ═══════════════════════════════════════════════
@@ -3989,7 +4133,7 @@ async function fetchAndRenderRankModal(sort) {
   }
 
   try {
-    const limit = sort === 'recent' ? 10 : 20;
+    const limit = sort === 'recent' ? 30 : 100;
     const res   = await fetch(`${APPS_SCRIPT_URL}?sort=${sort}&limit=${limit}`);
     const json  = await res.json();
     if (!json.success) throw new Error(json.error || '조회 실패');
@@ -4020,11 +4164,13 @@ async function fetchAndRenderRankModal(sort) {
       html += `<tr><td colspan="8" style="color:#aaa;padding:20px">아직 등록된 랭킹이 없어요!<br>게임 오버 후 첫 번째 주인공이 되어보세요 🚀</td></tr>`;
     } else {
       rows.forEach((r, i) => {
-        const medal    = medals[i] || (i + 1);
+        const rank     = i + 1;
+        const medal    = medals[i] || rank;
         const gradeKey = (r.grade || 'D').charAt(0);
         const accColor = r.accuracy >= 80 ? '#00ff88' : r.accuracy >= 60 ? '#ffe000' : '#ff8800';
         const dateStr  = r.date ? String(r.date).slice(0, 10) : '-';
-        html += `<tr>
+        const nickLower = (r.nickname || '').toLowerCase();
+        html += `<tr data-nick="${escHtml(nickLower)}" data-rank="${rank}">
           <td class="rank-medal">${medal}</td>
           <td style="font-weight:700">${escHtml(r.nickname)}</td>
           <td class="${tdCls(2)}" style="color:${accColor};font-weight:800">${r.accuracy}%</td>
@@ -4038,9 +4184,20 @@ async function fetchAndRenderRankModal(sort) {
     }
     html += '</tbody></table>';
     wrap.innerHTML = html;
+    // 검색바 초기화 & 현재 검색어 재적용
+    const searchInput = document.getElementById('rank-search');
+    if (searchInput && searchInput.value.trim()) {
+      filterRankTable(searchInput.value);
+    } else {
+      document.getElementById('rank-search-result').textContent =
+        rows.length > 0 ? `${rows.length}명` : '';
+    }
 
   } catch (err) {
-    wrap.innerHTML = `<div id="rank-modal-loading" style="color:#ff4444">❌ 랭킹 로드 실패: ${err.message}</div>`;
+    const hint = location.protocol === 'file:'
+      ? '<br><span style="font-size:11px;color:#888">💡 로컬 파일(file://)에서 실행 중이에요. 등록은 가능하지만 조회는 로컬 서버(예: <code>python -m http.server</code>)로 열어야 작동해요.</span>'
+      : '';
+    wrap.innerHTML = `<div id="rank-modal-loading" style="color:#ff4444">❌ 랭킹 로드 실패: ${err.message}${hint}</div>`;
   }
 }
 // Auto-open on first visit (이어할 게임 있으면 이어하기 모달 우선)
