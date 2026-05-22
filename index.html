@@ -1698,7 +1698,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00029</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.0003</div>
 
 <!-- 랭킹 등록용 숨김 form (file:// 환경에서 CORS 제약 없이 POST) -->
 <iframe name="ranking-sink" id="ranking-sink" style="display:none" title="ranking-sink"></iframe>
@@ -1837,7 +1837,7 @@ body{
       <div class="guide-feature">
         <div class="guide-feature-icon">🔥</div>
         <div class="guide-feature-body"><b style="color:#ff4444">8개</b>를 쌓으면 <b style="color:#ff8800">FEVER TIME 발동!</b><br>
-          10초간 유지비 걱정 없이 마음껏 배달할 수 있어요!</div>
+          60초간 서빙 성공 시 <b>💰돈·🏆점수가 2배</b>, <b>⭐평판도 보너스</b>!</div>
       </div>
       <div class="guide-feature">
         <div class="guide-feature-icon">💥</div>
@@ -1880,7 +1880,7 @@ body{
 <div id="fever-overlay">
   <div id="fever-bg"></div>
   <div id="fever-banner">🔥 FEVER TIME! 🔥</div>
-  <div id="fever-sub">10초간 유지비 지출 정지!</div>
+  <div id="fever-sub">60초간 💰돈·🏆점수 2배 + ⭐평판 보너스!</div>
   <div id="fever-bar-wrap">
     <div id="fever-bar-lbl">⏱ FEVER</div>
     <div id="fever-bar-bg"><div id="fever-bar-inner" style="width:100%"></div></div>
@@ -2536,16 +2536,12 @@ function startMaintTimer(keepRemaining) {
   G.maintTimer = setInterval(() => {
     G.maintTimeLeft -= .5;
     if (G.maintTimeLeft <= 0) {
-      if (!G.feverActive) {
-        const cost = LEVELS[G.level].maintCost;
-        spendMoney(cost);
-        addLog(`🔧 유지비 -₩${cost}`, 'warning');
-        if (checkGameOver()) {
-          stopAll();
-          return;
-        }
-      } else {
-        addLog(`🔥 피버! 유지비 면제`, 'success');
+      const cost = LEVELS[G.level].maintCost;
+      spendMoney(cost);
+      addLog(`🔧 유지비 -₩${cost}`, 'warning');
+      if (checkGameOver()) {
+        stopAll();
+        return;
       }
       G.maintTimeLeft = LEVELS[G.level].maintInterval;
       renderShop();
@@ -2893,13 +2889,24 @@ function serveCustomer(idx) {
 
   if (cmp === 0) {
     // Perfect! — 분수가 정확히 일치
-    const earned = pizzaPrice + c.tip + lvlBonus;
+    let earned    = pizzaPrice + c.tip + lvlBonus;
+    let scoreGain = 100 + lvlBonus;
+    let feverTag  = '';
+
+    // 🔥 피버 타임 보너스 — 돈·점수 2배, 평판 +5
+    if (G.feverActive) {
+      earned    = Math.round(earned * 2);
+      scoreGain = Math.round(scoreGain * 2);
+      gainRep(5);
+      feverTag  = ' 🔥피버 2배 +평판5';
+    }
+
     addMoney(earned);
-    G.score += 100 + lvlBonus;
+    G.score += scoreGain;
     c.satisfied = true;
     G.correctCount++; // 정답 카운트
-    showMsg(`🎉 완벽! +₩${earned} +${100+lvlBonus}점`, 'success');
-    addLog(`✅ ${c.name} 만족! +₩${earned}`, 'success');
+    showMsg(`🎉 완벽! +₩${earned} +${scoreGain}점${feverTag}`, 'success');
+    addLog(`✅ ${c.name} 만족! +₩${earned}${feverTag}`, 'success');
     addPizzaBox();
   } else if (cmp === 1) {
     // Too much — 준 양이 주문보다 많음
@@ -3250,7 +3257,7 @@ function pickXrayChip(d) {
    PIZZA BOX TOWER & FEVER
 ═══════════════════════════════════════════════ */
 const MAX_BOXES = 8;
-const FEVER_SECS = 10;
+const FEVER_SECS = 60;
 
 function addPizzaBox() {
   if (G.feverActive) return;
@@ -3319,8 +3326,8 @@ function triggerFever() {
     });
   }
 
-  showMsg('🔥 FEVER TIME! 10초 유지비 면제!', 'success', 2500);
-  addLog('🔥 피버 타임 발동! 유지비 정지', 'success');
+  showMsg('🔥 FEVER TIME! 60초간 보상 2배!', 'success', 2500);
+  addLog('🔥 피버 타임 발동! 돈·점수 2배, 평판 보너스', 'success');
 
   // Spaceship parade
   G.shipInterval = setInterval(spawnFeverShip, 1200);
@@ -3619,12 +3626,21 @@ function makeChecksum(p) {
   return h.toString(36);
 }
 
+// 랭킹 목록 노출 최소 라운드 (Code.gs의 MIN_RANK_ROUNDS와 동일)
+const MIN_RANK_ROUNDS = 30;
+
 /* 등록 성공 처리 — 버튼·플래그·UI 일괄 잠금 */
 function _finalizeRankingSuccess(gradeLabel, notice) {
   const btn = document.getElementById('go-submit-btn');
   const msg = document.getElementById('go-submit-msg');
+  // 30라운드 미만이면 랭킹 목록에 안 보인다는 안내 추가
+  let extraNote = notice || '';
+  if (G.roundCount < MIN_RANK_ROUNDS) {
+    const warn = `⚠️ ${MIN_RANK_ROUNDS}라운드 이상부터 랭킹 목록에 표시돼요 (현재 ${G.roundCount}라운드)`;
+    extraNote = extraNote ? (extraNote + '<br>' + warn) : warn;
+  }
   msg.innerHTML = `✅ 랭킹 등록 완료! 등급: <b>${gradeLabel}</b>` +
-                  (notice ? `<br><span style="font-size:11px;color:#888">${notice}</span>` : '');
+                  (extraNote ? `<br><span style="font-size:11px;color:#888">${extraNote}</span>` : '');
   msg.className = 'ok';
   btn.textContent = '✅ 등록 완료 (한 게임당 1회)';
   btn.disabled = true;
