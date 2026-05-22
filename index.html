@@ -1698,7 +1698,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.0003</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00031</div>
 
 <!-- 랭킹 등록용 숨김 form (file:// 환경에서 CORS 제약 없이 POST) -->
 <iframe name="ranking-sink" id="ranking-sink" style="display:none" title="ranking-sink"></iframe>
@@ -3633,10 +3633,10 @@ const MIN_RANK_ROUNDS = 30;
 function _finalizeRankingSuccess(gradeLabel, notice) {
   const btn = document.getElementById('go-submit-btn');
   const msg = document.getElementById('go-submit-msg');
-  // 30라운드 미만이면 랭킹 목록에 안 보인다는 안내 추가
+  // 30라운드 미만이면 '정답률' 랭킹에만 안 보인다는 안내 추가
   let extraNote = notice || '';
   if (G.roundCount < MIN_RANK_ROUNDS) {
-    const warn = `⚠️ ${MIN_RANK_ROUNDS}라운드 이상부터 랭킹 목록에 표시돼요 (현재 ${G.roundCount}라운드)`;
+    const warn = `ℹ️ '📊정답률' 랭킹은 ${MIN_RANK_ROUNDS}라운드 이상부터 표시돼요 (현재 ${G.roundCount}라운드 · 다른 랭킹엔 정상 표시)`;
     extraNote = extraNote ? (extraNote + '<br>' + warn) : warn;
   }
   msg.innerHTML = `✅ 랭킹 등록 완료! 등급: <b>${gradeLabel}</b>` +
@@ -4175,7 +4175,7 @@ let _rankTab = 'top';
 
 const RANK_TAB_META = {
   top:      { label: '교육 종합 점수 기준 (정답률 60% · 점수 25% · 콤보 15%)', col: -1 },
-  accuracy: { label: '정답률 높은 순 — 정확하게 풀수록 유리해요!',             col: 2 },
+  accuracy: { label: '정답률 높은 순 — 30라운드 이상 기록만 (공정 비교)',       col: 2 },
   score:    { label: '점수 높은 순',                                             col: 3 },
   combo:    { label: '최대 콤보 높은 순 — 연속 성공 집중력 순위!',              col: 4 },
   round:    { label: '라운드 많은 순 — 오래 살아남을수록 유리해요!',            col: 5 },
