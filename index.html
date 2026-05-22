@@ -1698,7 +1698,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00031</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00032</div>
 
 <!-- 랭킹 등록용 숨김 form (file:// 환경에서 CORS 제약 없이 POST) -->
 <iframe name="ranking-sink" id="ranking-sink" style="display:none" title="ranking-sink"></iframe>
@@ -1832,17 +1832,18 @@ body{
       <div class="guide-feature">
         <div class="guide-feature-icon">📦</div>
         <div class="guide-feature-body">서빙에 성공할 때마다 <b>피자 박스</b>가 쌓여요!<br>
-          연속 성공으로 탑을 높이 쌓을수록 <b>COMBO</b>가 터져요!</div>
+          틀리거나 시간 초과 시 탑이 <b>와르르 무너져요.</b></div>
       </div>
       <div class="guide-feature">
         <div class="guide-feature-icon">🔥</div>
-        <div class="guide-feature-body"><b style="color:#ff4444">8개</b>를 쌓으면 <b style="color:#ff8800">FEVER TIME 발동!</b><br>
+        <div class="guide-feature-body">박스 <b style="color:#ff4444">8개</b>를 쌓으면 <b style="color:#ff8800">FEVER TIME 발동!</b><br>
           60초간 서빙 성공 시 <b>💰돈·🏆점수가 2배</b>, <b>⭐평판도 보너스</b>!</div>
       </div>
       <div class="guide-feature">
-        <div class="guide-feature-icon">💥</div>
-        <div class="guide-feature-body">틀리거나 시간 초과 시 탑이 <b>와르르 무너져요!</b><br>
-          탑이 높을수록 집중해서 정확하게 맞춰야 해요!</div>
+        <div class="guide-feature-icon">🔥</div>
+        <div class="guide-feature-body"><b>COMBO(콤보)</b>는 박스 탑과 별개예요!<br>
+          <b>연속으로 정답</b>을 맞히면 콤보가 계속 올라가고,<br>
+          틀리면 0으로 초기화돼요. 최고 콤보는 랭킹에 기록돼요!</div>
       </div>
     </div>
 
@@ -2036,7 +2037,8 @@ function freshState() {
     inventory: { toppingBomb: 0, towerMagnet: 0, xrayGoggles: 0 },
     xrayActive: false,
     // 랭킹 통계
-    maxCombo: 0,      // 도달한 최대 피자 박스 탑 높이
+    combo: 0,         // 현재 연속 정답 콤보 (오답/시간초과 시 0)
+    maxCombo: 0,      // 도달한 최대 연속 정답 콤보
     correctCount: 0,  // 정확히 맞춘 서빙 수
     totalCount: 0,    // 총 서빙 시도 수
     // 조작 방지
@@ -2566,6 +2568,7 @@ function startCustomerTimers() {
         c.timedOut = true;
         c.served = true;
         loseRep(10);
+        G.combo = 0; // 시간 초과 — 콤보 끊김
         collapseTower();
         addLog(`⏰ ${c.name} 시간 초과! -10%`, 'error');
         showMsg(`⏰ ${c.name}이(가) 떠났어요!`, 'error', 1500);
@@ -2905,8 +2908,12 @@ function serveCustomer(idx) {
     G.score += scoreGain;
     c.satisfied = true;
     G.correctCount++; // 정답 카운트
+    // 연속 정답 콤보 (박스 탑과 별개로 계속 누적)
+    G.combo++;
+    if (G.combo > G.maxCombo) G.maxCombo = G.combo;
     showMsg(`🎉 완벽! +₩${earned} +${scoreGain}점${feverTag}`, 'success');
-    addLog(`✅ ${c.name} 만족! +₩${earned}${feverTag}`, 'success');
+    addLog(`✅ ${c.name} 만족! +₩${earned} (${G.combo}콤보)${feverTag}`, 'success');
+    if (G.combo >= 2) showComboPopup(G.combo); // 2콤보부터 팝업
     addPizzaBox();
   } else if (cmp === 1) {
     // Too much — 준 양이 주문보다 많음
@@ -2914,6 +2921,7 @@ function serveCustomer(idx) {
     const waste = extra * 25;
     spendMoney(waste);
     loseRep(5);
+    G.combo = 0; // 콤보 끊김
     c.failed = true;
     c.failMsg = `😅 양이 너무 많아요! (${frac(selected,denom)} ≠ ${frac(c.numerator,c.denominator)})`;
     showMsg(`😅 양이 너무 많아요! -₩${waste} 평판-5%`, 'warning');
@@ -2922,6 +2930,7 @@ function serveCustomer(idx) {
   } else {
     // Too little — 준 양이 주문보다 적음
     loseRep(15);
+    G.combo = 0; // 콤보 끊김
     c.failed = true;
     c.failMsg = `😠 양이 부족해요! (${frac(selected,denom)} ≠ ${frac(c.numerator,c.denominator)})`;
     showMsg(`😠 양이 부족해요! 평판 -15%`, 'error');
@@ -3262,16 +3271,14 @@ const FEVER_SECS = 60;
 function addPizzaBox() {
   if (G.feverActive) return;
   G.boxStack++;
-  if (G.boxStack > G.maxCombo) G.maxCombo = G.boxStack; // 최대 콤보 갱신
   renderBoxTower(true);
-  showComboPopup(G.boxStack);
   if (G.boxStack >= MAX_BOXES) triggerFever();
 }
 
 function showComboPopup(count) {
   const el = document.getElementById('combo-popup');
   if (!el) return;
-  el.textContent = `BOX TOWER COMBO ${count}!`;
+  el.textContent = `🔥 ${count} COMBO!`;
   el.classList.remove('combo-burst');
   void el.offsetWidth; // force reflow to restart animation
   el.classList.add('combo-burst');
@@ -3789,12 +3796,12 @@ async function loadAndShowRanking() {
 
     let html = `<table class="rank-table">
       <thead><tr>
-        <th>순위</th><th>닉네임</th><th>📊 정답률</th>
+        <th>순위</th><th>닉네임</th><th>📊 정답률</th><th>✅ 정답수</th><th>📝 총문제</th>
         <th>🏆 점수</th><th>🔥 콤보</th><th>📦 라운드</th><th>등급</th>
       </tr></thead><tbody>`;
 
     if (rows.length === 0) {
-      html += `<tr><td colspan="7" style="color:#aaa;padding:16px">아직 랭킹이 없어요. 첫 번째 주인공이 되세요!</td></tr>`;
+      html += `<tr><td colspan="9" style="color:#aaa;padding:16px">아직 랭킹이 없어요. 첫 번째 주인공이 되세요!</td></tr>`;
     } else {
       rows.forEach((r, i) => {
         const rank      = i + 1;
@@ -3806,6 +3813,8 @@ async function loadAndShowRanking() {
           <td class="rank-medal">${medal}</td>
           <td style="font-weight:700">${escHtml(r.nickname)}${isMe ? ' 👈' : ''}</td>
           <td style="font-size:14px;font-weight:800;color:${r.accuracy>=80?'#00ff88':r.accuracy>=60?'#ffe000':'#ff8800'}">${r.accuracy}%</td>
+          <td style="color:#00ff88">${r.correct}</td>
+          <td style="color:#aaa">${r.total}</td>
           <td>${Number(r.score).toLocaleString()}</td>
           <td>${r.maxCombo}</td>
           <td>${r.round}</td>
@@ -4044,6 +4053,7 @@ function saveGameState() {
       maintTimeLeft: G.maintTimeLeft,
       boxStack: G.boxStack,
       inventory: { ...G.inventory },
+      combo: G.combo,
       maxCombo: G.maxCombo,
       correctCount: G.correctCount,
       totalCount: G.totalCount,
@@ -4100,6 +4110,7 @@ function resumeGame() {
     maintTimeLeft: data.maintTimeLeft || LEVELS[data.level || 0].maintInterval,
     boxStack: data.boxStack || 0,
     inventory: data.inventory || { toppingBomb: 0, towerMagnet: 0, xrayGoggles: 0 },
+    combo: data.combo || 0,
     maxCombo: data.maxCombo || 0,
     correctCount: data.correctCount || 0,
     totalCount: data.totalCount || 0,
@@ -4176,10 +4187,10 @@ let _rankTab = 'top';
 const RANK_TAB_META = {
   top:      { label: '교육 종합 점수 기준 (정답률 60% · 점수 25% · 콤보 15%)', col: -1 },
   accuracy: { label: '정답률 높은 순 — 30라운드 이상 기록만 (공정 비교)',       col: 2 },
-  score:    { label: '점수 높은 순',                                             col: 3 },
-  combo:    { label: '최대 콤보 높은 순 — 연속 성공 집중력 순위!',              col: 4 },
-  round:    { label: '라운드 많은 순 — 오래 살아남을수록 유리해요!',            col: 5 },
-  grade:    { label: '등급 높은 순 (S > A > B > C > D)',                        col: 6 },
+  score:    { label: '점수 높은 순',                                             col: 5 },
+  combo:    { label: '최대 콤보 높은 순 — 연속 정답 집중력 순위!',              col: 6 },
+  round:    { label: '라운드 많은 순 — 오래 살아남을수록 유리해요!',            col: 7 },
+  grade:    { label: '등급 높은 순 (S > A > B > C > D)',                        col: 8 },
   recent:   { label: '최근 등록 순',                                             col: -1 },
 };
 
@@ -4222,7 +4233,7 @@ async function fetchAndRenderRankModal(sort) {
     const medals    = ['🥇','🥈','🥉'];
     const highlightCol = (RANK_TAB_META[sort] || {}).col ?? -1;
 
-    // 열 인덱스: 0=순위 1=닉 2=정답률 3=점수 4=콤보 5=라운드 6=등급 7=날짜
+    // 열 인덱스: 0=순위 1=닉 2=정답률 3=정답수 4=총문제 5=점수 6=콤보 7=라운드 8=등급 9=날짜
     const thStyle = (col) => col === highlightCol
       ? 'background:rgba(255,224,0,.18);color:#ffe000'
       : '';
@@ -4233,15 +4244,17 @@ async function fetchAndRenderRankModal(sort) {
         <th>순위</th>
         <th>닉네임</th>
         <th style="${thStyle(2)}">📊 정답률</th>
-        <th style="${thStyle(3)}">🏆 점수</th>
-        <th style="${thStyle(4)}">🔥 콤보</th>
-        <th style="${thStyle(5)}">📦 라운드</th>
-        <th style="${thStyle(6)}">🎓 등급</th>
+        <th>✅ 정답수</th>
+        <th>📝 총문제</th>
+        <th style="${thStyle(5)}">🏆 점수</th>
+        <th style="${thStyle(6)}">🔥 콤보</th>
+        <th style="${thStyle(7)}">📦 라운드</th>
+        <th style="${thStyle(8)}">🎓 등급</th>
         <th>날짜</th>
       </tr></thead><tbody>`;
 
     if (rows.length === 0) {
-      html += `<tr><td colspan="8" style="color:#aaa;padding:20px">아직 등록된 랭킹이 없어요!<br>게임 오버 후 첫 번째 주인공이 되어보세요 🚀</td></tr>`;
+      html += `<tr><td colspan="10" style="color:#aaa;padding:20px">아직 등록된 랭킹이 없어요!<br>게임 오버 후 첫 번째 주인공이 되어보세요 🚀</td></tr>`;
     } else {
       rows.forEach((r, i) => {
         const rank     = i + 1;
@@ -4254,10 +4267,12 @@ async function fetchAndRenderRankModal(sort) {
           <td class="rank-medal">${medal}</td>
           <td style="font-weight:700">${escHtml(r.nickname)}</td>
           <td class="${tdCls(2)}" style="color:${accColor};font-weight:800">${r.accuracy}%</td>
-          <td class="${tdCls(3)}">${Number(r.score).toLocaleString()}</td>
-          <td class="${tdCls(4)}">${r.maxCombo}</td>
-          <td class="${tdCls(5)}">${r.round}</td>
-          <td class="rank-grade-${gradeKey} ${tdCls(6)}">${gradeKey}</td>
+          <td style="color:#00ff88">${r.correct}</td>
+          <td style="color:#aaa">${r.total}</td>
+          <td class="${tdCls(5)}">${Number(r.score).toLocaleString()}</td>
+          <td class="${tdCls(6)}">${r.maxCombo}</td>
+          <td class="${tdCls(7)}">${r.round}</td>
+          <td class="rank-grade-${gradeKey} ${tdCls(8)}">${gradeKey}</td>
           <td style="color:#555;font-size:11px">${dateStr}</td>
         </tr>`;
       });
