@@ -246,6 +246,19 @@ body{
 #level-badge.grade-3{border-color:#ffe00060;box-shadow:0 0 10px #ffe00025}
 #level-badge.grade-4{border-color:#ff880060;box-shadow:0 0 10px #ff880025}
 #level-badge.grade-5{border-color:#ff44ff80;box-shadow:0 0 14px #ff44ff45}
+#level-badge.grade-6{border-color:#ff4444aa;box-shadow:0 0 14px #ff444450}
+#level-badge.grade-7{border-color:#cc0066aa;box-shadow:0 0 16px #cc006660}
+#level-badge.grade-8{border-color:#990033cc;box-shadow:0 0 18px #99003370}
+#level-badge.grade-9{border-color:#66001bff;box-shadow:0 0 20px #cc002488,inset 0 0 14px #ff446610}
+#level-badge.grade-10{
+  border-color:#ffffff;
+  box-shadow:0 0 22px #ff44ff,0 0 32px #00ffff,0 0 46px #ffe000,inset 0 0 16px #ff44ff22;
+  animation:legend-pulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes legend-pulse{
+  from{box-shadow:0 0 22px #ff44ff,0 0 32px #00ffff,0 0 46px #ffe000,inset 0 0 16px #ff44ff22}
+  to{box-shadow:0 0 28px #ffe000,0 0 38px #ff44ff,0 0 52px #00ffff,inset 0 0 20px #ffe00033}
+}
 
 /* ── PHASE INDICATOR ── */
 #phase-bar{
@@ -1606,6 +1619,11 @@ body{
         <span class="lvl-star" data-step="2">⭐</span>
         <span class="lvl-star" data-step="3">⭐</span>
         <span class="lvl-star" data-step="4">⭐</span>
+        <span class="lvl-star" data-step="5">⭐</span>
+        <span class="lvl-star" data-step="6">⭐</span>
+        <span class="lvl-star" data-step="7">⭐</span>
+        <span class="lvl-star" data-step="8">⭐</span>
+        <span class="lvl-star" data-step="9">⭐</span>
       </div>
     </div>
     <div class="hud-item">
@@ -1698,7 +1716,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00032</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00033</div>
 
 <!-- 랭킹 등록용 숨김 form (file:// 환경에서 CORS 제약 없이 POST) -->
 <iframe name="ranking-sink" id="ranking-sink" style="display:none" title="ranking-sink"></iframe>
@@ -1984,15 +2002,100 @@ const LEVELS = [
     bonus:180,
   },
   {
-    // 🌌 Lv.5 — 최고 난이도 (분모 8~20)
+    // 🌌 Lv.5 — 은하 마스터 (분모 8~20)
     emoji:'🌌',
     name:'은하 마스터',
-    desc:'최고 난이도! 진정한 통분의 달인이 되어보세요',
+    desc:'은하계 통분 마스터로 가는 길!',
     orders:[{n:7,d:8},{n:9,d:10},{n:11,d:12},{n:11,d:15},{n:13,d:15},{n:14,d:15},{n:11,d:20},{n:13,d:20},{n:17,d:20}],
     denoms:[24,40,60,120,240],
     waitTime:80, maintCost:100, maintInterval:20,
-    levelScore:Infinity,
+    levelScore:3200,
     bonus:240,
+  },
+  {
+    // 💥 Lv.6 — 슈퍼노바 셰프 (분모 8~18, 시간 압박↑)
+    emoji:'💥',
+    name:'슈퍼노바 셰프',
+    desc:'유지비가 본격적으로 늘어요! 효율적으로 벌어요',
+    orders:[
+      {n:5,d:8},{n:7,d:8},
+      {n:7,d:10},{n:9,d:10},
+      {n:7,d:12},{n:11,d:12},
+      {n:8,d:15},{n:11,d:15},{n:13,d:15},
+      {n:11,d:18},{n:13,d:18},{n:17,d:18}
+    ],
+    denoms:[30,40,60,72,90,120,180],
+    waitTime:80, maintCost:130, maintInterval:18,
+    levelScore:5000,
+    bonus:300,
+  },
+  {
+    // 🌀 Lv.7 — 블랙홀 마이스터 (분모 10~20)
+    emoji:'🌀',
+    name:'블랙홀 마이스터',
+    desc:'유지비 압박이 거세져요! 효율적으로 벌어요',
+    orders:[
+      {n:7,d:10},{n:9,d:10},
+      {n:7,d:12},{n:11,d:12},
+      {n:11,d:15},{n:13,d:15},{n:14,d:15},
+      {n:11,d:18},{n:13,d:18},{n:17,d:18},
+      {n:11,d:20},{n:13,d:20},{n:17,d:20},{n:19,d:20}
+    ],
+    denoms:[60,72,90,120,180],
+    waitTime:80, maintCost:170, maintInterval:16,
+    levelScore:7500,
+    bonus:380,
+  },
+  {
+    // ☄️ Lv.8 — 펄사 그랜드셰프 (분모 12~24)
+    emoji:'☄️',
+    name:'펄사 그랜드셰프',
+    desc:'분모가 다양해져요! 정확한 통분이 핵심',
+    orders:[
+      {n:7,d:12},{n:11,d:12},
+      {n:11,d:15},{n:13,d:15},{n:14,d:15},
+      {n:13,d:18},{n:17,d:18},
+      {n:13,d:20},{n:17,d:20},{n:19,d:20},
+      {n:11,d:24},{n:17,d:24},{n:19,d:24},{n:23,d:24}
+    ],
+    denoms:[60,72,90,120,180],
+    waitTime:80, maintCost:220, maintInterval:14,
+    levelScore:11000,
+    bonus:480,
+  },
+  {
+    // 🪐 Lv.9 — 퀘이사 레전드 (분모 15~30)
+    emoji:'🪐',
+    name:'퀘이사 레전드',
+    desc:'전설의 영역! 통분 신경전이 극에 달해요',
+    orders:[
+      {n:11,d:15},{n:13,d:15},{n:14,d:15},
+      {n:13,d:18},{n:17,d:18},
+      {n:13,d:20},{n:17,d:20},{n:19,d:20},
+      {n:17,d:24},{n:19,d:24},{n:23,d:24},
+      {n:19,d:30},{n:23,d:30},{n:29,d:30}
+    ],
+    denoms:[60,90,120,180],
+    waitTime:80, maintCost:280, maintInterval:12,
+    levelScore:16000,
+    bonus:600,
+  },
+  {
+    // 🌠 Lv.10 — 빅뱅 어센더 (최종, 분모 18~36)
+    emoji:'🌠',
+    name:'빅뱅 어센더',
+    desc:'우주의 정점! 한 치의 오차도 허용 안 돼요',
+    orders:[
+      {n:13,d:18},{n:17,d:18},
+      {n:13,d:20},{n:17,d:20},{n:19,d:20},
+      {n:19,d:24},{n:23,d:24},
+      {n:23,d:30},{n:29,d:30},
+      {n:25,d:36},{n:29,d:36},{n:31,d:36},{n:35,d:36}
+    ],
+    denoms:[72,90,120,180],
+    waitTime:80, maintCost:350, maintInterval:10,
+    levelScore:Infinity,
+    bonus:760,
   },
 ];
 
