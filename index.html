@@ -1716,7 +1716,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00033</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00034</div>
 
 <!-- 랭킹 등록용 숨김 form (file:// 환경에서 CORS 제약 없이 POST) -->
 <iframe name="ranking-sink" id="ranking-sink" style="display:none" title="ranking-sink"></iframe>
@@ -4422,6 +4422,8 @@ function restartGame() {
   G.score = 0;
   G.level = 0;
   G.roundCount = 0;
+  G.playStartAt = Date.now();          // 🔑 플레이 시작 시각 (조작 방지용 — 누락 시 playMs=0이 됨)
+  G.playMsAccum = 0;
   // Clear log
   const log = document.getElementById('info-log');
   while (log.children.length > 1) log.removeChild(log.lastChild);
