@@ -1716,7 +1716,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00035</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00036</div>
 
 <!-- 랭킹 등록용 숨김 form (file:// 환경에서 CORS 제약 없이 POST) -->
 <iframe name="ranking-sink" id="ranking-sink" style="display:none" title="ranking-sink"></iframe>
@@ -3910,7 +3910,7 @@ async function loadAndShowRanking() {
         const rank      = i + 1;
         const medal     = medals[i] || rank;
         const gradeKey  = (r.grade || 'D').charAt(0);
-        const isMe      = nickname && r.nickname === nickname;
+        const isMe      = nickname && String(r.nickname) === nickname;
         const rowClass  = isMe ? 'rank-row-me' : '';
         html += `<tr class="${rowClass}">
           <td class="rank-medal">${medal}</td>
@@ -4406,7 +4406,7 @@ async function fetchAndRenderRankModal(sort) {
         const gradeKey = (r.grade || 'D').charAt(0);
         const accColor = r.accuracy >= 80 ? '#00ff88' : r.accuracy >= 60 ? '#ffe000' : '#ff8800';
         const dateStr  = r.date ? String(r.date).slice(0, 10) : '-';
-        const nickLower = (r.nickname || '').toLowerCase();
+        const nickLower = String(r.nickname || '').toLowerCase();
         html += `<tr data-nick="${escHtml(nickLower)}" data-rank="${rank}">
           <td class="rank-medal">${medal}</td>
           <td style="font-weight:700">${escHtml(r.nickname)}</td>
