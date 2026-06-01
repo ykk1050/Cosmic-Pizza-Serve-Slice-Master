@@ -1716,7 +1716,7 @@ body{
 <div id="float-msg"></div>
 
 <!-- 워터마크 -->
-<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00034</div>
+<div id="watermark">Created by gamtudyssam using AI &nbsp;·&nbsp; 0.00035</div>
 
 <!-- 랭킹 등록용 숨김 form (file:// 환경에서 CORS 제약 없이 POST) -->
 <iframe name="ranking-sink" id="ranking-sink" style="display:none" title="ranking-sink"></iframe>
@@ -4160,6 +4160,9 @@ function saveGameState() {
       maxCombo: G.maxCombo,
       correctCount: G.correctCount,
       totalCount: G.totalCount,
+      // 🔥 피버 상태 (중단 시점 그대로 보존)
+      feverActive: G.feverActive,
+      feverTimeLeft: G.feverTimeLeft,
       // 누적 플레이 시간 (이번 세션 + 이전 누적)
       playMsAccum: (G.playMsAccum || 0) + (G.playStartAt ? Date.now() - G.playStartAt : 0),
     };
@@ -4219,16 +4222,54 @@ function resumeGame() {
     totalCount: data.totalCount || 0,
     playStartAt: Date.now(),
     playMsAccum: data.playMsAccum || 0,
+    // 🔥 피버 상태 복원 (남은 시간이 있을 때만)
+    feverActive: !!(data.feverActive && data.feverTimeLeft > 0),
+    feverTimeLeft: (data.feverActive && data.feverTimeLeft > 0) ? data.feverTimeLeft : 0,
   });
 
   // 타이머 재가동
   startMaintTimer(/*keepRemaining=*/true);
   if (G.phase === 'ORDER' || G.phase === 'SERVE') startCustomerTimers();
 
+  // 🔥 피버 진행 중이었으면 오버레이/카운트다운 재가동
+  if (G.feverActive) resumeFever();
+
   renderBoxTower(false);
   render();
   startBgm();
   showMsg('🎮 이어서 시작합니다!', 'info', 2000);
+}
+
+/* 피버 재가동 (이어하기 전용) — 트리거 애니메이션 없이 남은 시간만 이어감 */
+function resumeFever() {
+  // 피버 오버레이 표시
+  const ov = document.getElementById('fever-overlay');
+  if (ov) {
+    ov.style.display = 'block';
+    ['fever-banner','fever-sub'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.style.animation='none'; void el.offsetWidth; el.style.animation=''; }
+    });
+  }
+  // 우주선 행렬 재가동
+  if (G.shipInterval) clearInterval(G.shipInterval);
+  G.shipInterval = setInterval(spawnFeverShip, 1200);
+  for (let i = 0; i < 2; i++) setTimeout(spawnFeverShip, i * 300);
+
+  // 카운트다운 재시작 (남은 시간으로)
+  if (G.feverTimer) clearInterval(G.feverTimer);
+  G.feverTimer = setInterval(() => {
+    G.feverTimeLeft -= 0.1;
+    const bar = document.getElementById('fever-bar-inner');
+    if (bar) bar.style.width = Math.max(0, G.feverTimeLeft / FEVER_SECS * 100) + '%';
+    if (G.feverTimeLeft <= 0) endFever();
+  }, 100);
+
+  // 게이지 즉시 동기화
+  const bar = document.getElementById('fever-bar-inner');
+  if (bar) bar.style.width = Math.max(0, G.feverTimeLeft / FEVER_SECS * 100) + '%';
+
+  addLog(`🔥 피버 타임 이어집니다 (남은 ${Math.ceil(G.feverTimeLeft)}초)`, 'success');
 }
 
 /* 이어하기 모달 */
